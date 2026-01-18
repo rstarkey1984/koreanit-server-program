@@ -145,4 +145,4 @@ Ubuntu는
 * WSL2의 역할과 개념
 * Ubuntu 24.04 설치
 
-→ [**04. WSL2 + Ubuntu 24.04 환경 구성**](04_wsl_ubuntu_setup.md)
+→ [**04. WSL2 + Ubuntu 24.04 환경 구성**](04_wsl2_ubuntu_setup.md)

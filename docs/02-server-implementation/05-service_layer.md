@@ -123,6 +123,30 @@ public class HelloController {
 * Controller는 로직을 직접 처리하지 않는다
 * Service를 호출만 한다
 
+### 1) 서버 시작 시
+
+- Spring이 @RestController, @Service 붙은 클래스를 찾아 Bean으로 등록
+
+- HelloController 생성 시 HelloService를 자동 주입(DI)
+
+### 2) 요청이 들어오면
+
+- GET /hello 요청 → DispatcherServlet(모든 요청의 입구)이 받음
+
+- URL 매핑에 따라 HelloController.hello() 선택
+
+### 3) 컨트롤러 실행
+
+- hello() 메서드가 실행되고
+
+- 실제 로직은 HelloService.helloMessage()에 위임
+
+### 4) 응답 반환
+
+- Service의 반환값(String)을
+
+- @RestController가 HTTP 응답 바디로 변환해 반환
+
 ---
 
 ## 6. 서버 실행 및 확인
@@ -177,4 +201,4 @@ Repository를 추가하면 구조는 더 명확해진다.
 
 ## 다음 단계
 
-→ [**06. Repository 계층과 SQL**](06-mysql_install_setup.md)
+→ [**06. MySQL 설치 및 기본 구성**](06-mysql_install_setup.md)

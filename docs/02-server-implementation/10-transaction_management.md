@@ -109,7 +109,7 @@ Service 시작
 ```
 
 > 실제 코드 적용은
-> 다음 단계에서 진행한다.
+> 다음 실습에서 진행한다.
 
 ---
 
@@ -126,16 +126,205 @@ Service 시작
 
 ---
 
-## 이 장의 핵심 정리
+# 실습: 트랜잭션이 없을 때 vs 있을 때
 
-* 트랜잭션은 작업의 일관성을 보장한다
-* 여러 SQL은 하나의 트랜잭션으로 묶여야 한다
-* 커밋과 롤백은 성공/실패의 기준이다
-* Spring은 트랜잭션을 자동으로 관리한다
+이 실습은
+**두 번의 INSERT 중 하나가 실패했을 때**
+DB에 어떤 결과가 남는지 확인한다.
+
+실습 목표:
+
+* 트랜잭션이 없으면 첫 번째 INSERT가 남는 것을 확인
+* `@Transactional`이 있으면 둘 다 롤백되는 것을 확인
+
+---
+
+## 8. 실습 준비: tx_logs 테이블 생성
+
+MySQL에서 아래 SQL을 실행한다.
+
+```sql
+USE koreanit_service;
+
+CREATE TABLE IF NOT EXISTS tx_logs (
+  id BIGINT PRIMARY KEY,
+  message VARCHAR(100) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+초기화(선택):
+
+```sql
+TRUNCATE tx_logs;
+```
+
+---
+
+## 9. Repository: INSERT 메서드 만들기
+
+`TxLogRepository`를 생성한다.
+
+```java
+package com.koreanit.server.repository;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class TxLogRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public TxLogRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public int insert(long id, String message) {
+        String sql = "INSERT INTO tx_logs (id, message) VALUES (?, ?)";
+        return jdbcTemplate.update(sql, id, message);
+    }
+}
+```
+
+---
+
+## 10. Service: 트랜잭션 없는 버전 / 있는 버전
+
+`TxDemoService`를 생성한다.
+
+```java
+package com.koreanit.server.service;
+
+import com.koreanit.server.repository.TxLogRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class TxDemoService {
+
+    private final TxLogRepository txLogRepository;
+
+    public TxDemoService(TxLogRepository txLogRepository) {
+        this.txLogRepository = txLogRepository;
+    }
+
+    // 트랜잭션 없음: 첫 INSERT는 남을 수 있다
+    public void runWithoutTx() {
+        txLogRepository.insert(1L, "step1 - without tx");
+
+        // 두 번째 INSERT에서 PK 중복 에러 발생(일부러 실패)
+        txLogRepository.insert(1L, "step2 - without tx (duplicate)");
+    }
+
+    // 트랜잭션 있음: 둘 다 롤백된다
+    @Transactional
+    public void runWithTx() {
+        txLogRepository.insert(2L, "step1 - with tx");
+
+        // 두 번째 INSERT에서 PK 중복 에러 발생(일부러 실패)
+        txLogRepository.insert(2L, "step2 - with tx (duplicate)");
+    }
+}
+```
+
+---
+
+## 11. Controller: 실행 엔드포인트 추가
+
+`TxDemoController`를 생성한다.
+
+```java
+package com.koreanit.server.controller;
+
+import com.koreanit.server.service.TxDemoService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class TxDemoController {
+
+    private final TxDemoService txDemoService;
+
+    public TxDemoController(TxDemoService txDemoService) {
+        this.txDemoService = txDemoService;
+    }
+
+    // 트랜잭션 없이 실행 (실패 후에도 일부 데이터가 남는지 확인)
+    @GetMapping("/tx/no")
+    public String runNoTx() {
+        txDemoService.runWithoutTx();
+        return "ok";
+    }
+
+    // 트랜잭션으로 실행 (실패하면 모두 롤백되는지 확인)
+    @GetMapping("/tx/yes")
+    public String runWithTx() {
+        txDemoService.runWithTx();
+        return "ok";
+    }
+}
+```
+
+---
+
+## 12. 실습 실행 및 확인
+
+### 12-1. 서버 실행
+
+```bash
+./gradlew bootRun
+```
+
+### 12-2. 트랜잭션 없는 실행
+
+브라우저 또는 curl:
+
+```bash
+curl -i http://localhost:8080/tx/no
+```
+
+요청은 500 에러가 날 수 있다(의도된 실패).
+
+DB 확인:
+
+```sql
+SELECT * FROM tx_logs ORDER BY created_at DESC;
+```
+
+기대 결과:
+
+* `id=1` 행이 남아있을 수 있다
+
+---
+
+### 12-3. 트랜잭션 있는 실행
+
+```bash
+curl -i http://localhost:8080/tx/yes
+```
+
+DB 확인:
+
+```sql
+SELECT * FROM tx_logs ORDER BY created_at DESC;
+```
+
+기대 결과:
+
+* `id=2`는 **남지 않는다** (롤백)
+
+---
+
+## 13. 이 실습의 핵심 정리
+
+* 트랜잭션이 없으면 일부 작업이 DB에 남을 수 있다
+* `@Transactional`은 Service 경계에서 “작업 단위”를 만든다
+* 실패 시 Rollback으로 일관성을 지킨다
+* 트랜잭션은 “하나의 커넥션” 위에서 동작한다
 
 ---
 
 ## 다음 단계
 
 → [**요청 / 응답 흐름 정리**](11-request_response_flow.md)
-

@@ -21,13 +21,18 @@
 
 ## 문서 구성 (폴더 내부 번호 기준)
 
-1. 서버프로그램 구현 과정 소개 (`01-intro.md`)
-2. Linux를 사용하는 이유 (`02-why_linux.md`)
-3. Ubuntu를 사용하는 이유 (`03-why_ubuntu.md`)
-4. WSL2 + Ubuntu 24.04 환경 구성 (`04-wsl2_ubuntu_setup.md`)
-5. Ubuntu 서버 기본 세팅 (`05-ubuntu_server_setup.md`)
-6. 필수 서버 패키지 설치 (`06-basic_packages.md`)
-7. 리눅스 서버 기초 맛보기 (`07-linux_server_basics.md`)
+1. [서버프로그램 구현 과정 소개](01-intro.md)
+2. [Linux를 사용하는 이유](02-why_linux.md)
+3. [Ubuntu를 사용하는 이유](03-why_ubuntu.md)
+4. [WSL + Ubuntu 환경 구성](04-wsl2_ubuntu_setup.md)
+5. [Ubuntu 서버 기본 세팅](05-ubuntu_server_setup.md)
+6. [필수 서버 패키지 설치](06-required_server_packages.md)
+7. [리눅스 서버 기초 맛보기](07-linux_server_basics.md)
+8. [Nginx 설치 및 동작 확인](08-nginx_install_check.md)
+9. [Nginx 설정 구조 이해](09-nginx_config_structure.md)
+10. [정적 루트 디렉터리 설정](10-nginx_static_root.md)
+11. [Git 기반 서버 프로젝트 준비](11-git_server_project.md)
+
 
 ---
 
