@@ -169,4 +169,4 @@ Git은
 
 ## 다음 단계
 
-→ [**서버 프로그램 구현하기**](/docs/02-server-implementation/README.md)
+→ [**서버 프로그램 구현하기**](/docs/02-server-implementation/01-webserver_vs_was.md)
