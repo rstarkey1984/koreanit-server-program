@@ -7,14 +7,6 @@ Spring Boot 서버가 MySQL DB에 접속하기 위한 **기본 연결 설정**�
 "DB 연결이 된다"가 아니라,
 서버가 DB와 통신할 때 왜 **커넥션 풀(connection pool)** 이 필요한지 이해하는 것이다.
 
----
-
-## 강의 목표
-
-* JDBC가 무엇인지 개념을 이해한다
-* 커넥션(connection)과 커넥션 풀의 차이를 설명할 수 있다
-* Spring Boot에서 DB 접속 설정을 구성할 수 있다
-* 서버 시작 시 DB 연결이 정상인지 스스로 점검할 수 있다
 
 ---
 
@@ -78,9 +70,6 @@ Java에서 DB에 접근하기 위한 표준 인터페이스다.
 * port (예: 3306)
 * database (예: server_program)
 * username / password (서비스 계정)
-
-실습에서는 root 계정 대신
-서비스 전용 계정을 사용하는 것을 권장한다.
 
 ---
 

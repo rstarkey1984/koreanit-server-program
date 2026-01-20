@@ -15,22 +15,13 @@ Node.js 기반의 배치/워커 서버를 구성하여,
 - MySQL 8.x
 - Git
 
----
-
-## 학습 내용 요약
-
-- Controller / Service / Repository 구조 이해
-- SQL 직접 작성 기반 데이터베이스 연동
-- 서버 로직에서의 트랜잭션 개념
-- 공통 응답 및 예외 처리 구조
-- 메인 서버와 배치/워커 프로세스의 역할 분리
 
 ---
 
 
 ## 시작하기
 > 강의는 docs/README.md의 순서를 따라 진행됩니다.
-- 강의안 문서 바로가기: [`docs/README.md`](/docs/README.md)
+- 강의안 문서 바로가기: [`docs/README.md`](/docs/01-environment-setup/01-intro.md)
 
 ---
 

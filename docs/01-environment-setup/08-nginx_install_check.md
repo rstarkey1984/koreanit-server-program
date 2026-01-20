@@ -169,4 +169,4 @@ ls /var/www/html
 
 ## 다음 단계
 
-→ [**09. Nginx 설정 파일 구조 이해**](09_nginx_config_structure.md)
+→ [**09. Nginx 설정 파일 구조 이해**](09-nginx_config_structure.md)

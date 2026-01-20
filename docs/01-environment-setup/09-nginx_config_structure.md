@@ -8,14 +8,6 @@ Nginx 웹 서버의 **설정 파일 구조와 역할**을 이해한다.
 학생은 이 장을 끝내면
 "Nginx 설정은 어디서, 어떤 파일을 수정해야 하는지"를 설명할 수 있어야 한다.
 
----
-
-## 강의 목표
-
-* Nginx 설정 파일이 어디에 있는지 이해한다
-* nginx.conf의 역할을 이해한다
-* sites-available / sites-enabled 구조를 이해한다
-* 설정 파일을 직접 수정하지 않고 구조를 먼저 파악한다
 
 ---
 
@@ -195,5 +187,5 @@ default -> /etc/nginx/sites-available/default
 
 ## 다음 단계
 
-→ [**10. 정적 파일 서비스 및 루트 디렉터리 설정**](10_nginx_static_root.md)
+→ [**10. 정적 파일 서비스 및 루트 디렉터리 설정**](10-nginx_static_root.md)
 

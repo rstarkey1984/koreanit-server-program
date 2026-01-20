@@ -1,4 +1,4 @@
-# 08. Repository 계층 설계
+# Repository 계층 설계
 
 이 장에서는  
 Spring Boot 서버에서 **Repository 계층을 어떻게 설계해야 하는지**를 다룬다.
@@ -7,14 +7,6 @@ Spring Boot 서버에서 **Repository 계층을 어떻게 설계해야 하는지
 SQL을 작성하는 것이 아니라,  
 **“Repository는 어떤 책임을 가져야 하는가”를 명확히 정하는 것**이다.
 
----
-
-## 강의 목표
-
-* Repository 계층의 책임과 한계를 설명할 수 있다
-* Service와 Repository의 역할 차이를 구조적으로 이해한다
-* Repository 메서드 설계 기준을 인식한다
-* 이후 실습(09번)을 위한 설계 기준을 확보한다
 
 ---
 
@@ -144,7 +136,36 @@ Repository는
 
 ---
 
-## 7. 이 장의 핵심 정리
+## 7. Repository 클래스 생성
+
+`HelloRepository` 클래스를 생성한다.
+
+```java
+package com.koreanit.server.repository;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class HelloRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public HelloRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public Integer ping() {
+        String sql = "SELECT 1";
+        return jdbcTemplate.queryForObject(sql, Integer.class);
+    }
+}
+```
+
+- JdbcTemplate는
+DataSource 위에서 JDBC 반복 코드를 제거하고, Repository가 SQL 실행 책임만 가지도록 해주는 도구다.
+
+## 8. 이 장의 핵심 정리
 
 * Repository는 데이터 접근 전담 계층이다
 * SQL은 반드시 Repository 안에만 존재한다

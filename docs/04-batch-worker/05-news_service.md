@@ -7,14 +7,6 @@ Node.js 워커에서 사용하는 **뉴스 서비스(service)** 를 구현한다
 job과 repository 사이에서  
 **업무 흐름과 규칙을 담당하는 계층**이다.
 
----
-
-## 학습 목표
-
-* service 계층의 책임을 명확히 이해한다
-* job → service → repository 흐름을 고정한다
-* service에서 무엇을 하고, 무엇을 하지 않는지 구분한다
-* 이후 repository(SQL) 구현을 위한 경계를 만든다
 
 ---
 

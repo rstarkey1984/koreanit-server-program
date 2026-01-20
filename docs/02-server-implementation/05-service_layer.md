@@ -7,14 +7,6 @@ Controller에서 처리하던 로직을 분리하여
 이 단계의 핵심은
 "왜 Service가 필요한가"를 코드로 체감하는 것이다.
 
----
-
-## 강의 목표
-
-* Service 계층의 역할을 설명할 수 있다
-* Controller와 Service의 책임을 구분할 수 있다
-* Controller에서 로직을 제거하고 Service로 위임한다
-* 계층 분리의 필요성을 이해한다
 
 ---
 

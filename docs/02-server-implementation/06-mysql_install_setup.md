@@ -7,14 +7,6 @@
 Repository(SQL) 계층을 구현하고 실제 데이터를 저장/조회해야 하므로,
 **DB 설치를 먼저 끝내고** 다음 장으로 넘어간다.
 
----
-
-## 강의 목표
-
-* Ubuntu(WSL)에서 MySQL 8.x를 설치할 수 있다
-* MySQL 서비스가 정상 동작하는지 확인할 수 있다
-* 실습용 DB와 전용 계정을 생성하고 권한을 부여할 수 있다
-* 서버 애플리케이션이 사용할 접속 정보를 정리할 수 있다
 
 ---
 
@@ -105,56 +97,11 @@ TO 'koreanit_app'@'localhost';
 
 FLUSH PRIVILEGES;
 ```
+\\
 
 ---
 
-## 6. users 테이블 생성 및 데이터 확인
-
-이제 실제 Repository 단계에서 사용할 수 있도록
-간단한 `users` 테이블을 만들고 데이터를 넣어본다.
-
-### 6-1. DB 선택
-
-```sql
-USE koreanit_service;
-```
-
-### 6-2. users 테이블 생성
-
-```sql
-CREATE TABLE users (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(100) NOT NULL,
-  name VARCHAR(50) NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### 6-3. 샘플 데이터 INSERT
-
-```sql
-INSERT INTO users (email, name) VALUES
-('user1@test.com', '사용자1'),
-('user2@test.com', '사용자2'),
-('user3@test.com', '사용자3');
-```
-
-### 6-4. 데이터 조회 (SELECT)
-
-```sql
-SELECT * FROM users;
-```
-
-이 단계의 목적은
-
-* 테이블 생성 흐름 이해
-* INSERT → SELECT 데이터 흐름 확인
-
-이다.
-
----
-
-## 7. 애플리케이션 접속 정보 정리
+## 6. 애플리케이션 접속 정보 정리
 
 ```text
 DB_HOST=localhost
@@ -164,20 +111,6 @@ DB_USER=koreanit_app
 DB_PASSWORD=password
 ```
 
----
-
-## 8. 자주 발생하는 문제
-
-### MySQL 서비스 inactive
-
-* systemd 설정 확인
-* `wsl --shutdown` 후 재접속
-
-### 포트 확인
-
-```bash
-ss -ltnp | grep :3306
-```
 
 ---
 
