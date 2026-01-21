@@ -164,9 +164,3 @@ Git은
 * 모든 작업은 커밋 단위로 관리한다
 * .gitignore로 불필요한 파일을 제외한다
 * "되돌릴 수 있다"는 감각이 중요하다
-
----
-
-## 다음 단계
-
-→ [**서버 프로그램 구현하기**](/docs/02-server-implementation/01-webserver_vs_was.md)

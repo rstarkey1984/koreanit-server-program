@@ -65,12 +65,9 @@
 
 ### 개발 및 관리 도구
 
-* VSCode는 코드 편집 및 터미널 작업 도구로 사용한다
-  - VSCode 설치 - `https://code.visualstudio.com/download`  
-  - 확장 설치 - `Korean Language Pack for Visual Studio Code`
-* Git (형상관리)
-* 터미널 기반 작업
-
+* VSCode
+  - 설치 - `https://code.visualstudio.com/download`  
+  - 확장 - Korean Language Pack for Visual Studio Code
 
 ---
 

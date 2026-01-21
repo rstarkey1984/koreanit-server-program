@@ -7,7 +7,6 @@
 각 파일의 세부 문법을 이해하는 것이 아니라,
 **"어디에 무엇을 넣어야 하는지"라는 구조 감각**을 만드는 것이다.
 
-
 ---
 
 ## 1. 프로젝트 최상위 구조
@@ -21,11 +20,13 @@ ls
 대표적인 구성은 다음과 같다.
 
 ```text
-spring-server/
+spring/
 ├── build.gradle
 ├── settings.gradle
 ├── gradlew
 ├── gradlew.bat
+├── gradle/
+├── build/
 ├── src/
 └── README.md (선택)
 ```
@@ -38,20 +39,27 @@ spring-server/
 
 * 프로젝트의 **빌드 설정 파일**
 * 의존성(dependencies) 정의
-* Java / Spring Boot 설정
+* Java / Spring Boot 버전 관리
 
-> 서버 실행, 라이브러리 추가는
-> 모두 이 파일을 통해 관리된다.
+> 서버 실행 방식, 라이브러리 추가 여부는
+> 모두 이 파일을 기준으로 결정된다.
 
 ---
 
 ### 2-2. gradlew
 
 * Gradle Wrapper 실행 파일
-* 로컬에 Gradle 설치 없이 빌드 가능
+* 로컬에 Gradle 설치 없이 **Gradle 작업(task)** 실행 가능
 
 ```bash
+# 애플리케이션 실행 (빌드 아님)
 ./gradlew bootRun
+
+# 전체 빌드 (컴파일 + 테스트 + jar 생성)
+./gradlew build
+
+# 실행 가능한 Spring Boot jar 생성
+./gradlew bootJar
 ```
 
 ---
@@ -62,8 +70,8 @@ spring-server/
 src/
 ├── main/
 │   ├── java/
-│   │   └── com/koreanit/server/
-│   │       └── SpringServerApplication.java
+│   │   └── com/koreanit/spring/
+│   │       └── Application.java
 │   └── resources/
 │       └── application.yml (또는 application.properties)
 └── test/
@@ -76,15 +84,18 @@ src/
 ### 4-1. 패키지 구조
 
 ```text
-com.koreanit.server
+com.koreanit.spring
 ```
 
 이 패키지가
-**서버 프로그램 코드의 시작점**이다.
+**서버 프로그램 코드의 시작점(root package)** 이다.
+
+이 패키지를 기준으로
+컴포넌트 스캔이 수행된다.
 
 ---
 
-### 4-2. SpringServerApplication.java
+### 4-2. Application.java
 
 * 서버 프로그램의 **진입점(entry point)**
 * main 메서드를 포함
@@ -92,15 +103,15 @@ com.koreanit.server
 
 ```java
 @SpringBootApplication
-public class SpringServerApplication {
+public class Application {
     public static void main(String[] args) {
-        SpringApplication.run(SpringServerApplication.class, args);
+        SpringApplication.run(Application.class, args);
     }
 }
 ```
 
 > 이 파일은
-> 서버 프로세스를 시작하는 역할만 한다.
+> 서버 프로세스를 시작하는 역할만 담당한다.
 
 ---
 
@@ -109,25 +120,24 @@ public class SpringServerApplication {
 ### 5-1. application.yml / application.properties
 
 * 서버 설정 파일
-* 포트, DB 연결 정보, 로그 설정 등
+* 포트, DB 연결 정보, 로그 레벨 등 관리
 
-> 아직은 수정하지 않는다.
-> 설정은 **필요할 때** 다룬다.
+> 현재 단계에서는 수정하지 않는다.
+> 설정은 **필요해지는 시점에만 추가**한다.
 
 ---
 
 ## 6. test 영역
 
 * 테스트 코드 작성 위치
-* 이번 강의에서는
-  기본 구조만 인지하고 넘어간다.
+* 현재 단계에서는 구조만 인지한다.
 
 ---
 
 ## 7. 앞으로 추가될 구조
 
 이제부터 우리는
-`com.koreanit.server` 아래에
+`com.koreanit.spring` 아래에
 다음 구조를 단계적으로 추가한다.
 
 ```text
@@ -137,19 +147,19 @@ repository/
 ```
 
 각 계층은
-**명확히 분리된 역할**을 가진다.
+**명확히 분리된 책임**을 가진다.
 
 ---
 
 ## 이 장의 핵심 정리
 
 * Spring Boot 프로젝트는 정해진 기본 구조를 가진다
-* 코드는 main/java 아래에 작성한다
+* 서버 코드는 main/java 아래에 작성한다
 * 설정은 resources 아래에서 관리한다
-* 구조를 이해하는 것이 문법보다 중요하다
+* 구조 이해가 문법 이해보다 우선이다
 
 ---
 
 ## 다음 단계
 
-→ [**04. Controller 계층 구현**](04-controller_layer.md)
+→ [**간단한 서버 동작 확인 실습 (/health, Servlet)**](03-health_check.md)

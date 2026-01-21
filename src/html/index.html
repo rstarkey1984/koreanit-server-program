@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Nginx Static Server</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-slate-200 min-h-screen flex items-center justify-center">
+
+  <div class="w-full max-w-2xl border border-slate-700 rounded-xl p-6">
+    <h1 class="text-2xl font-semibold mb-4">Nginx Static Server</h1>
+
+    <table class="w-full text-sm border-collapse">
+      <tbody class="divide-y divide-slate-700">
+        <tr><td>Host</td><td id="host"></td></tr>
+        <tr><td>Protocol</td><td id="protocol"></td></tr>
+        <tr><td>Port</td><td id="port"></td></tr>
+        <tr><td>Path</td><td id="path"></td></tr>
+        <tr><td>HTTPS</td><td id="https"></td></tr>
+        <tr><td>Current Time</td><td id="time"></td></tr>
+        <tr><td>Language</td><td id="lang"></td></tr>
+        <tr><td>Screen</td><td id="screen"></td></tr>
+        <tr><td>User Agent</td><td class="break-all" id="ua"></td></tr>
+        <tr><td>Referer</td><td class="break-all" id="ref"></td></tr>
+        <tr><td>Document Root</td><td>/var/www/html</td></tr>
+        <tr><td>Server Header</td><td id="server"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    document.getElementById("host").textContent = location.hostname;
+    document.getElementById("protocol").textContent = location.protocol;
+    document.getElementById("port").textContent = location.port || "(default)";
+    document.getElementById("path").textContent = location.pathname;
+    document.getElementById("https").textContent =
+      location.protocol === "https:" ? "YES" : "NO";
+    document.getElementById("time").textContent =
+      new Date().toLocaleString();
+    document.getElementById("lang").textContent = navigator.language;
+    document.getElementById("screen").textContent =
+      screen.width + " x " + screen.height;
+    document.getElementById("ua").textContent = navigator.userAgent;
+    document.getElementById("ref").textContent =
+      document.referrer || "(direct)";
+
+    fetch(location.href, { method: "HEAD" })
+      .then(res => {
+        document.getElementById("server").textContent =
+          res.headers.get("server") || "(hidden)";
+      });
+  </script>
+
+</body>
+</html>

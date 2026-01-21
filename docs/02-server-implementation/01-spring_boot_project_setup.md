@@ -7,6 +7,12 @@
 웹 서버(Web Server)와 WAS의 역할 구분을 바탕으로,
 이제 **실제로 동작하는 서버 프로그램(WAS)** 을 만든다.
 
+--- 
+
+### 스프링부트 프로젝트 개발을 위한 `VSCode` 확장 설치
+- Extension Pack for Java
+
+- Spring Boot Extension Pack
 
 ---
 
@@ -21,23 +27,19 @@
 * 서버 환경에서 그대로 재현 가능하다
 * Spring Boot 공식 템플릿을 사용한다
 
-> 이후 모든 실습은
-> 이 프로젝트를 기준으로 진행한다.
-
 ---
 
-## 2. 프로젝트 기본 스펙 (고정)
+## 2. 프로젝트 기본 스펙
 
 | 항목              | 값                   |
 | --------------- | ------------------- |
 | Build Tool      | Gradle (Groovy)     |
 | Language        | Java                |
-| Java Version    | 21 (LTS)            |
+| Java Version    | 17 (LTS)            |
 | Spring Boot     | 3.x                 |
 | Packaging       | Jar                 |
 | Group           | com.koreanit        |
-| Artifact / Name | spring-server       |
-| Package         | com.koreanit.server |
+| Artifact / Name | spring              |
 
 ---
 
@@ -52,40 +54,23 @@ cd ~/projects/koreanit-server
 
 ---
 
-## 4. Spring Initializr로 프로젝트 생성 (CLI 방식)
+## 4. Spring Boot 프로젝트 생성하기 (Spring Initializr)
 
-WSL 환경에서
-Spring Initializr를 사용해 프로젝트 ZIP을 생성한다.
+`https://start.spring.io/`
 
-```bash
-curl -L "https://start.spring.io/starter.zip \
-?type=gradle-project \
-&language=java \
-&bootVersion=3.4.1 \
-&javaVersion=21 \
-&groupId=com.koreanit \
-&artifactId=spring-server \
-&name=spring-server \
-&packageName=com.koreanit.server \
-&packaging=jar \
-&dependencies=web,validation,jdbc,mysql" \
--o spring-server.zip
-```
+![spring-init](/img/spring-init.png?1)
 
-압축 해제:
+### 4-1. GENERATE 버튼 눌러서 zip 파일 다운로드
 
-```bash
-unzip spring-server.zip -d spring-server
-rm spring-server.zip
-```
+### 4-2. VSCode로 서버에 spring.zip 파일 업로드
 
 ---
 
-## 5. 생성된 프로젝트 구조 확인
+## 5. 터미널에서 압축풀기
 
 ```bash
-cd spring-server
-ls
+cd ~/projects/koreanit-server
+unzip spring.zip
 ```
 
 주요 파일:
@@ -128,23 +113,6 @@ Started SpringServerApplication
 http://localhost:8080
 ```
 
-아직 컨트롤러를 만들지 않았기 때문에
-기본 오류 페이지가 표시된다.
-
-이 상태는 **정상**이다.
-
-> 중요한 것은
-> 서버 프로세스가 정상적으로 실행되고 있다는 점이다.
-
----
-
-## 8. 지금 단계의 핵심 의미
-
-이 시점에서 우리는:
-
-* 웹 서버(Nginx) 뒤에서
-* 실제로 실행되는 WAS를 만들었고
-* 코드 기반 서버가 동작하는 환경을 준비했다
 
 이제부터는
 **이 서버에 기능을 하나씩 추가**하게 된다.
@@ -161,4 +129,5 @@ http://localhost:8080
 
 ## 다음 단계
 
-→ [**03. 프로젝트 구조 개요**](03-project_structure_overview.md)
+→ [**02. 프로젝트 구조 개요**](02-project_structure_overview.md)
+

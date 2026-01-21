@@ -1,4 +1,4 @@
-# Ubuntu 서버 기본 세팅
+# Ubuntu 서버 개발 환경 구축
 
 *(패키지 업데이트 · OpenSSH · VS Code 연동)*
 
@@ -47,9 +47,9 @@ sudo apt upgrade -y
 
 ## 필수 패키지 설치
 ```
-sudo apt install -y curl git build-essential
+sudo apt install -y curl build-essential openjdk-17-jdk unzip
 ```
-> `curl`(네트워크 요청), `git`(형상관리), `build-essential`(컴파일러·빌드 도구 묶음)을 설치해 소스 다운로드·빌드·개발 환경을 준비한다.
+> `curl`(네트워크 요청), `build-essential`(컴파일러·빌드 도구 묶음)을 설치해 소스 다운로드·빌드·개발 환경을 준비한다.
 
 ---
 
@@ -70,6 +70,7 @@ sudo apt install -y openssh-server
 ```bash
 sudo systemctl status ssh
 ```
+> systemctl 은 리눅스에서 systemd 기반 서비스(데몬)를 시작·중지·상태 확인·자동실행 설정까지 관리하는 명령어다.
 
 정상 상태 예시:
 
@@ -151,7 +152,7 @@ ubuntu@ubuntu24:~$
 
 ## 다음 단계
 
-→ [**06. Ubuntu 서버 기본 사용법**](06-ubuntu_server_basic_usage.md)
+→ [**06. Ubuntu 서버 맛보기**](06-ubuntu_server_basic_usage.md)
 
 
 ---
