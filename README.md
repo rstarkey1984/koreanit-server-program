@@ -13,8 +13,6 @@ Node.js 기반의 배치/워커 서버를 구성하여,
 - WSL2 + Ubuntu 24.04
 - Nginx, Spring Boot, Node.js
 - MySQL 8.x
-- Git
-
 
 ---
 

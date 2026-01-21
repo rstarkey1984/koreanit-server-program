@@ -55,19 +55,6 @@ snippets
 
 ---
 
-### 2-1. nginx.conf 열어보기
-
-```bash
-sudo less /etc/nginx/nginx.conf
-```
-
-설명 포인트:
-
-* 이 파일은 **거의 수정하지 않는다**
-* 실제 사이트 설정은 다른 파일에서 진행
-
----
-
 ## 3. sites-available 디렉터리
 
 ```text
@@ -179,6 +166,7 @@ default -> /etc/nginx/sites-available/default
 ## 이 장의 핵심 메시지
 
 * nginx.conf는 전체 설정의 뿌리
+
 * 실제 사이트 설정은 sites-available에서 관리
 * sites-enabled는 활성화 여부만 결정
 * 설정 구조를 이해하면 운영이 쉬워진다
