@@ -129,26 +129,11 @@ ubuntu@ubuntu24:~$
 
 ---
 
-### 5-3. 서버 폴더 열기
-
-```text
-/home/사용자명
-```
-
-예:
+### 5-3. VS Code 탐색기로 서버 폴더 열기
 
 ```text
 /home/ubuntu
 ```
-
-이제부터:
-
-* 터미널
-* 파일 편집
-* Git
-* 서버 실행
-
-모두 **서버 안에서 작업**
 
 ---
 
@@ -166,7 +151,7 @@ ubuntu@ubuntu24:~$
 
 ## 다음 단계
 
-→ [**06. Ubuntu 서버 기본 사용법**](06-required_server_packages.md)
+→ [**06. Ubuntu 서버 기본 사용법**](06-ubuntu_server_basic_usage.md)
 
 
 ---
