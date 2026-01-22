@@ -141,6 +141,13 @@ wsl
 ubuntu@ubuntu24:~$
 ```
 
+### 프로젝트 폴더 생성
+
+```bash
+mkdir -p ~/projects/koreanit-server
+cd ~/projects/koreanit-server
+```
+
 ## 윈도우 터미널에서 wsl 실행시 전체 흐름
 
 ```text

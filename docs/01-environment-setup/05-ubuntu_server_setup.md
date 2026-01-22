@@ -133,7 +133,7 @@ ubuntu@ubuntu24:~$
 ### 5-3. VS Code 탐색기로 서버 폴더 열기
 
 ```text
-/home/ubuntu
+/home/ubuntu/projects/koreanit-server
 ```
 
 ---

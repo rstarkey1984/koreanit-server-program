@@ -29,7 +29,7 @@ Controller는
 
 ## 2. Controller 패키지 생성
 
-`com.koreanit.server` 아래에
+`com.koreanit.spring` 아래에
 controller 패키지를 생성한다.
 
 ```text
@@ -47,7 +47,7 @@ HelloController.java
 ```
 
 ```java
-package com.koreanit.server.controller;
+package com.koreanit.spring.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -132,18 +132,6 @@ public Map<String, String> helloJson() {
 > `@RestController`는
 > 반환값을 자동으로 JSON으로 변환한다.
 
----
-
-## 7. Controller에서 하면 안 되는 것
-
-Controller에서는 다음을 하지 않는다.
-
-* DB 직접 접근
-* 복잡한 계산
-* 비즈니스 규칙 처리
-
-이것들은
-**Service 계층의 역할**이다.
 
 ---
 

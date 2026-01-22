@@ -65,7 +65,7 @@ src/main/java/com/koreanit/server/service
 `HelloService` 클래스를 생성한다.
 
 ```java
-package com.koreanit.server.service;
+package com.koreanit.spring.service;
 
 import org.springframework.stereotype.Service;
 
@@ -88,9 +88,9 @@ public class HelloService {
 Controller 코드를 수정한다.
 
 ```java
-package com.koreanit.server.controller;
+package com.koreanit.spring.controller;
 
-import com.koreanit.server.service.HelloService;
+import com.koreanit.spring.service.HelloService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -193,4 +193,4 @@ Repository를 추가하면 구조는 더 명확해진다.
 
 ## 다음 단계
 
-→ [**06. MySQL 설치 및 기본 구성**](06-mysql_install_setup.md)
+→ [**06. Repository 계층의 역할과 책임**](06-repository_layer.md)

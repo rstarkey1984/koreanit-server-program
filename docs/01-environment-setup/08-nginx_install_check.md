@@ -109,8 +109,7 @@ nginx -v
 
 ## 5. Nginx 서비스 상태 확인
 
-Nginx는
-**systemd 기반 서비스(데몬)** 로 실행된다.
+> Nginx는 **systemd 기반 서비스(데몬)** 로 실행된다.
 
 ### 5-1. 서비스 상태 확인
 
@@ -154,12 +153,12 @@ http://localhost
 
 ---
 
-## 7. Nginx 설정 파일 구조
+## 7. Nginx 설정하기
 
-### 7-1. `/etc/nginx`를 홈 디렉터리에서 보기 위한 심볼릭 링크
+### 7-1. `/etc/nginx`를 작업 디렉터리에서 보기 위한 심볼릭 링크
 
 ```bash
-ln -s /etc/nginx ~/
+ln -s /etc/nginx ~/projects/koreanit-server
 ```
 
 ---
@@ -175,7 +174,7 @@ sudo cp -rpf /etc/nginx/sites-available/default /etc/nginx/sites-available/defau
 sudo chown ubuntu /etc/nginx/sites-available/default
 ```
 
-`~/nginx/sites-available/default` 파일수정
+`nginx/sites-available/default` 파일수정
 
 ```nginx
 server {
@@ -226,7 +225,7 @@ server {
 
 ```bash
 sudo chown -R ubuntu /var/www
-ln -s /var/www ~/www
+ln -s /var/www ~/projects/koreanit-server/www
 ```
 
 이제 다음 경로에서 웹 파일을 직접 수정할 수 있다.
@@ -252,35 +251,5 @@ HTML 파일을 생성하고 브라우저에서 다시 확인한다.
 
 ## 다음 단계
 
-→ [**01. Spring Boot 프로젝트 생성 및 실행**](/docs/02-server-implementation/01-webserver_vs_was.md)
+→ [**09. MySQL 설치 및 기본 구성**](09-mysql_install_setup.md)
 
----
-
-## ( 참고 ) systemd 기본 명령어
-
-### 서비스 상태 확인
-
-```bash
-systemctl status nginx
-```
-
-### 서비스 시작 / 중지
-
-```bash
-systemctl start nginx
-systemctl stop nginx
-```
-
-### 재시작 / 리로드
-
-```bash
-systemctl restart nginx
-systemctl reload nginx
-```
-
-### 부팅 시 자동 실행 설정
-
-```bash
-systemctl enable nginx
-systemctl disable nginx
-```

@@ -16,7 +16,9 @@
 다음 조건이 만족되어야 한다.
 
 * Spring Boot 프로젝트가 정상 생성됨
+
 * `Application.java` 존재
+
 * `./gradlew bootRun`으로 서버 실행 가능
 
 ---
@@ -66,13 +68,38 @@ public class HealthController {
 
 는 것을 의미한다.
 
-즉,
+추가로 중요한 사실이 하나 있다.
 
-> 이 클래스는 **웹 요청을 받는 진입점** 역할을 한다.
+> `@RestController`가 붙은 클래스는
+> **Spring이 관리하는 객체(Bean)** 로 자동 등록된다.
+
+즉, 이 클래스는
+
+* 우리가 `new HealthController()`를 호출하지 않았지만
+* Spring이 서버 시작 시 **객체를 자동으로 생성**하고
+* 요청이 들어오면 해당 객체의 메서드를 실행한다
 
 ---
 
-### 3-2. `@GetMapping`이란?
+### 3-2. Controller는 Bean이다
+
+이 단계에서 기억해야 할 핵심 사실은 다음 한 문장이다.
+
+> **Controller 클래스는 Spring Bean이며,
+> Spring Container에 의해 자동으로 생성·관리된다.**
+
+현재 단계에서는
+Bean의 생성 원리나 내부 동작을 이해할 필요는 없다.
+
+지금은 다음 사실만 확인하면 충분하다.
+
+* Controller 객체는 **개발자가 직접 생성하지 않는다**
+* 서버 시작 시 **Spring이 자동으로 생성한다**
+* 요청이 들어오면 **이미 생성된 객체의 메서드가 실행된다**
+
+---
+
+### 3-3. `@GetMapping`이란?
 
 ```java
 @GetMapping("/health")
@@ -100,7 +127,7 @@ public String health() {
 
 ---
 
-### 3-3. 이 메서드의 역할 요약
+### 3-4. 이 메서드의 역할 요약
 
 이 메서드는 한 문장으로 정리하면 다음과 같다.
 
@@ -140,19 +167,20 @@ curl http://localhost:8080/health
 OK
 ```
 
-이 응답이 나오면,
+이 응답이 나오면 다음 사실이 모두 확인된다.
 
-* 서버가 실행 중이며
-* HTTP 요청을 받고
-* Controller 메서드가 실행되어
-* 응답을 반환하고 있음이 확인된다
+* 서버가 실행 중이다
+* HTTP 요청을 받고 있다
+* Spring이 생성한 Controller 객체가 존재한다
+* 요청에 따라 메서드가 실행된다
+* 반환값이 HTTP 응답으로 전달된다
 
 ---
 
 ## 다음 단계
 
-→ [**04. Controller 계층 구현**](04-controller_layer.md)
+다음 장에서는
+이 객체를 생성하고 관리하는 주체인
+**Spring Container와 Bean 개념**을 다룬다.
 
-다음 장부터는
-Controller가 어떤 역할을 가지는지,
-그리고 요청 데이터를 어떻게 처리하는지를 단계적으로 살펴본다.
+→ [**03. Spring Container와 Bean**](03-spring_bean.md)

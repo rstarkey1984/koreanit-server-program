@@ -97,7 +97,7 @@ TO 'koreanit_app'@'localhost';
 
 FLUSH PRIVILEGES;
 ```
-\\
+
 
 ---
 
@@ -111,6 +111,38 @@ DB_USER=koreanit_app
 DB_PASSWORD=password
 ```
 
+## 7. 실습용 테이블 생성 및 시드 데이터 추가
+
+### 1. vscode 에서 sql 폴더 생성
+
+### 1. GitHub 강의 사이트 `sql` 경로에 `schema.sql`,`seed_data.sql` 을 다운로드 받아서 생성한 폴더에 넣기
+
+### 2. `sql` 폴더 경로로 이동
+
+### 2. (테이블 생성) schema.sql 파일 있는 위치에서 아래 명령 실행:
+```bash
+sudo mysql koreanit_service < schema.sql
+```
+
+### 3. (시드데이터 추가) seed_data.sql 파일 있는 위치에서 아래 명령 실행:
+```bash
+sudo mysql koreanit_service < seed_data.sql
+```
+
+
+### 4. 확인
+
+```bash
+sudo mysql koreanit_service -e "SELECT COUNT(*) FROM users;"
+```
+
+```bash
+sudo mysql koreanit_service -e "SELECT COUNT(*) FROM posts;"
+```
+
+```bash
+sudo mysql koreanit_service -e "SELECT COUNT(*) FROM comments;"
+```
 
 ---
 
@@ -118,11 +150,10 @@ DB_PASSWORD=password
 
 * MySQL 설치 및 서비스 확인 완료
 * DB / 사용자 / 권한 구성 완료
-* users 테이블 생성 및 SELECT 확인
-* JDBC 커넥션 풀 설정과 Repository 실습을 위한 DB 준비 완료
+* 테이블 생성 및 시드 데이터 추가
 
 ---
 
 ## 다음 단계
 
-→ [**07. JDBC 커넥션 풀**](07-jdbc_connection_pool.md)
+→ [**01. Spring Boot 프로젝트 생성 및 실행**](/docs/02-server-implementation/01-spring_boot_project_setup.md)
