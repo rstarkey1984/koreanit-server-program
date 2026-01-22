@@ -1,4 +1,4 @@
-# 05. Service 계층 구현
+# Service 계층 구현
 
 이 장에서는
 Controller에서 처리하던 로직을 분리하여

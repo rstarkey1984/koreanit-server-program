@@ -234,8 +234,7 @@ ln -s /var/www ~/projects/koreanit-server/www
 ~/www/html/index.html
 ```
 
-HTML 파일을 생성하고 브라우저에서 다시 확인한다.
-[index.html 예시](/src/html/index.html)
+예제파일: [index.html](/koreanit-server/www/html/index.html)
 
 ---
 
