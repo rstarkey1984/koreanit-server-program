@@ -154,38 +154,32 @@ API 수가 늘어나도 응답 품질이 유지된다.
 예시 코드:
 
 ```java
-package com.example.api.common;
+package com.koreanit.spring.common;
 
 public class ApiResponse<T> {
 
-    private boolean success;
-    private String message;
-    private T data;
+    public boolean success;
+    public String message;
+    public T data;
+    public String code; // 실패 시 사용
 
-    public ApiResponse(boolean success, String message, T data) {
+    private ApiResponse(boolean success, String message, T data, String code) {
         this.success = success;
         this.message = message;
         this.data = data;
+        this.code = code;
     }
 
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, "OK", data);
+        return new ApiResponse<>(true, "OK", data, null);
     }
 
     public static <T> ApiResponse<T> ok(String message, T data) {
-        return new ApiResponse<>(true, message, data);
+        return new ApiResponse<>(true, message, data, null);
     }
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public T getData() {
-        return data;
+    public static <T> ApiResponse<T> fail(String code, String message) {
+        return new ApiResponse<>(false, message, null, code);
     }
 }
 ```
@@ -205,20 +199,25 @@ public class ApiResponse<T> {
 예시 코드:
 
 ```java
-package com.example.api.controller;
+package com.koreanit.spring.controller;
 
-import com.example.api.common.ApiResponse;
+import com.koreanit.spring.common.ApiResponse;
+import com.koreanit.spring.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
-public class HealthController {
+public class UserController {
 
-    @GetMapping("/health")
-    public ApiResponse<Void> health() {
-        return ApiResponse.ok(null);
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping("/db-check")
+    public ApiResponse<Integer> dbCheck() {
+        return ApiResponse.ok(userService.checkConnection());
     }
 }
 ```

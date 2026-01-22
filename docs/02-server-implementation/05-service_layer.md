@@ -1,4 +1,4 @@
-# Service 계층 구현
+# 05. Service 계층 구현
 
 이 장에서는
 Controller에서 처리하던 로직을 분리하여
@@ -7,12 +7,11 @@ Controller에서 처리하던 로직을 분리하여
 이 단계의 핵심은
 "왜 Service가 필요한가"를 코드로 체감하는 것이다.
 
-
 ---
 
 ## 1. 왜 Service 계층이 필요한가
 
-이전 장에서 만든 Controller는
+이전 단계에서 만든 Controller는
 요청을 받아 바로 응답을 반환했다.
 
 ```java
@@ -35,8 +34,7 @@ public String hello() {
 
 ## 2. Service 계층의 역할
 
-Service는
-**비즈니스 로직을 담당하는 계층**이다.
+Service는 **비즈니스 로직을 담당하는 계층**이다.
 
 역할:
 
@@ -45,8 +43,11 @@ Service는
 * Repository 호출
 * 트랜잭션 경계 설정(나중에 다룸)
 
-> Service는
-> HTTP를 모른다.
+핵심 원칙:
+
+> Service는 HTTP를 모른다.
+> Request/Response, URL, Controller 어노테이션을 사용하지 않는다.
+> 순수한 자바 로직만 가진다.
 
 ---
 
@@ -55,7 +56,7 @@ Service는
 다음 패키지를 생성한다.
 
 ```text
-src/main/java/com/koreanit/server/service
+src/main/java/com/koreanit/spring/service
 ```
 
 ---
@@ -78,8 +79,7 @@ public class HelloService {
 }
 ```
 
-* `@Service`:
-  Spring이 이 클래스를 Service 컴포넌트로 인식
+* `@Service`: Spring이 이 클래스를 Bean으로 등록한다.
 
 ---
 
@@ -113,35 +113,36 @@ public class HelloController {
 중요 포인트:
 
 * Controller는 로직을 직접 처리하지 않는다
-* Service를 호출만 한다
-
-### 1) 서버 시작 시
-
-- Spring이 @RestController, @Service 붙은 클래스를 찾아 Bean으로 등록
-
-- HelloController 생성 시 HelloService를 자동 주입(DI)
-
-### 2) 요청이 들어오면
-
-- GET /hello 요청 → DispatcherServlet(모든 요청의 입구)이 받음
-
-- URL 매핑에 따라 HelloController.hello() 선택
-
-### 3) 컨트롤러 실행
-
-- hello() 메서드가 실행되고
-
-- 실제 로직은 HelloService.helloMessage()에 위임
-
-### 4) 응답 반환
-
-- Service의 반환값(String)을
-
-- @RestController가 HTTP 응답 바디로 변환해 반환
+* Service를 **호출만** 한다
+* HelloService를 `new`로 생성하지 않는다
+* 객체 생성과 의존성 연결은 **Spring 컨테이너의 책임**이다(DI)
 
 ---
 
-## 6. 서버 실행 및 확인
+## 6. 동작 흐름 정리
+
+### 1) 서버 시작 시
+
+* Spring이 `@RestController`, `@Service`가 붙은 클래스를 찾아 Bean으로 등록한다.
+* HelloController 생성 시 HelloService를 자동 주입한다(DI).
+
+### 2) 요청이 들어오면
+
+* `GET /hello` 요청 → DispatcherServlet(요청 진입점)이 받는다.
+* URL 매핑에 따라 `HelloController.hello()`가 선택된다.
+
+### 3) 컨트롤러 실행
+
+* `hello()` 메서드가 실행된다.
+* 실제 로직은 `HelloService.helloMessage()`에 위임된다.
+
+### 4) 응답 반환
+
+* Service의 반환값(String)을 `@RestController`가 HTTP 응답 바디로 변환해 반환한다.
+
+---
+
+## 7. 서버 실행 및 확인
 
 ```bash
 ./gradlew bootRun
@@ -159,12 +160,9 @@ http://localhost:8080/hello
 Hello from Service
 ```
 
-> 응답이 동일하더라도
-> **구조는 완전히 달라졌다.**
-
 ---
 
-## 7. 계층 분리의 효과
+## 8. 계층 분리의 효과
 
 이제 구조는 다음과 같다.
 
@@ -175,11 +173,11 @@ Controller → Service
 장점:
 
 * Controller는 가벼워진다
-* 로직 재사용 가능
-* 테스트 가능성 증가
+* 서비스 로직 재사용이 가능해진다
+* 테스트 가능성이 증가한다
 
-이 다음 단계에서
-Repository를 추가하면 구조는 더 명확해진다.
+다음 단계에서 Repository를 추가하면
+구조는 더 명확해진다.
 
 ---
 
@@ -187,7 +185,7 @@ Repository를 추가하면 구조는 더 명확해진다.
 
 * Service는 비즈니스 로직 담당
 * Controller는 요청/응답만 담당
-* 로직은 반드시 Service로 이동한다
+* 로직은 Service로 이동한다
 
 ---
 

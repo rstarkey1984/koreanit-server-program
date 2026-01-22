@@ -127,27 +127,6 @@ HTTP 상태 코드는 다른 역할을 가진다.
 | 중복 요청 | 409     | DUPLICATE_RESOURCE |
 | 서버 오류 | 500     | INTERNAL_ERROR     |
 
----
-
-## 7. 지금 단계에서 하지 않는 것
-
-이 장에서는 다음을 다루지 않는다.
-
-* 예외 클래스 상속 구조 설계
-* 체크 예외 vs 언체크 예외 논쟁
-* 에러 코드 전체 목록 정의
-
-지금 단계의 목표는
-**에러 처리의 방향과 기준을 잡는 것**이다.
-
----
-
-## 이 장의 핵심 정리
-
-* 메시지와 에러 코드는 역할이 다르다
-* 에러 코드는 실패 유형의 식별자다
-* 공통 예외를 사용하면 흐름이 단순해진다
-* Controller는 예외를 처리하지 않는다
 
 ---
 
@@ -170,12 +149,12 @@ HTTP 상태 코드는 다른 역할을 가진다.
 
 ### 1단계: 에러 코드 enum 정의
 
-에러 코드를 하나의 enum으로 관리한다.
+> enum이란? 서로 관련 있는 상수들을 하나의 타입으로 묶은 것
 
 예시 코드:
 
 ```java
-package com.example.api.error;
+package com.koreanit.spring.error;
 
 public enum ErrorCode {
     INVALID_REQUEST,
@@ -199,17 +178,37 @@ public enum ErrorCode {
 예시 코드:
 
 ```java
-package com.example.api.error;
+package com.koreanit.spring.error;
 
+/**
+ * 애플리케이션 전용 예외 클래스
+ *
+ * - 비즈니스 로직 처리 중 발생한 오류를 표현한다
+ * - ErrorCode를 함께 담아 GlobalExceptionHandler로 전달한다
+ * - RuntimeException을 상속하여 트랜잭션 롤백 및 전파가 가능하다
+ */
 public class ApiException extends RuntimeException {
 
+    /** 에러의 종류를 나타내는 코드 */
     private final ErrorCode errorCode;
 
+    /**
+     * ApiException 생성자
+     *
+     * @param errorCode 에러 분류용 코드(enum)
+     * @param message   클라이언트에게 전달할 에러 메시지
+     */
     public ApiException(ErrorCode errorCode, String message) {
-        super(message);
+        super(message);          // RuntimeException의 메시지 설정
         this.errorCode = errorCode;
     }
 
+    /**
+     * 에러 코드 반환
+     *
+     * GlobalExceptionHandler에서
+     * HTTP 상태 코드 매핑에 사용된다
+     */
     public ErrorCode getErrorCode() {
         return errorCode;
     }
@@ -225,24 +224,25 @@ Service에서 실패 상황이 발생하면 공통 예외를 던진다.
 예시 코드:
 
 ```java
-package com.example.api.service;
+public String findUser(Integer id) {
+  if (id == 10) {
+    throw new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다");
+  }
 
-import com.example.api.error.ApiException;
-import com.example.api.error.ErrorCode;
-import org.springframework.stereotype.Service;
-
-@Service
-public class UserService {
-
-    public String findUser(Long id) {
-        if (id == null) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST, "잘못된 요청입니다");
-        }
-
-        throw new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다");
-    }
+  return "user";
 }
 ```
+
+
+### 4단계: Controller 계층에서 호출
+```java
+@GetMapping("/api/user/{id}")
+public ApiResponse<String> getUser(@PathVariable Integer id) {
+  return ApiResponse.ok(userService.findUser(id));
+}
+```
+
+> @PathVariable은 URL 경로에 포함된 값을 Controller 메서드 파라미터로 받는다.
 
 ---
 
@@ -251,6 +251,15 @@ public class UserService {
 * 에러 코드가 enum으로 관리되는가?
 * 메시지와 실패 유형을 분리했는가?
 * Controller에 try-catch 로직이 없는가?
+
+---
+
+## 이 장의 핵심 정리
+
+* 메시지와 에러 코드는 역할이 다르다
+* 에러 코드는 실패 유형의 식별자다
+* 공통 예외를 사용하면 흐름이 단순해진다
+* Controller는 예외를 처리하지 않는다
 
 ---
 

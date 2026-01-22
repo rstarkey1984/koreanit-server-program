@@ -13,7 +13,6 @@
 ### 필수 VS Code 확장
 
 * Extension Pack for Java
-* Spring Boot Extension Pack
 
 > 확장은 코드 작성·실행을 돕는 도구일 뿐,
 > **프로젝트 생성 방식이나 서버 구조에는 영향을 주지 않는다**
@@ -74,39 +73,13 @@ unzip spring.zip
 
 ```text
 spring/
-├── build.gradle
-├── settings.gradle
-├── gradlew
-├── gradlew.bat
-├── gradle/
-├── build/
-├── src/
-└── README.md (선택)
-```
-
-> 이 구조가 이후 모든 강의의 **기준 구조**가 된다
-
----
-
-## Spring Boot 서버 실행
-
-### 실행 명령 (Gradle Wrapper 사용)
-
-```bash
-./gradlew bootRun
-```
-
-### 정상 실행 로그 기준
-
-```text
-Tomcat started on port(s): 8080
-Started SpringServerApplication
-```
-
-### 실행 확인
-
-```text
-http://localhost:8080
+├── build.gradle        # 프로젝트 빌드 설정 파일 (의존성, 플러그인, 버전 관리)
+├── settings.gradle     # Gradle 프로젝트 이름 및 멀티모듈 설정
+├── gradlew             # Gradle Wrapper 실행 스크립트 (Linux / macOS)
+├── gradlew.bat         # Gradle Wrapper 실행 스크립트 (Windows)
+├── gradle/             # Gradle Wrapper 관련 파일 (Gradle 버전 고정용)
+├── build/              # 빌드 결과물 디렉터리 (자동 생성)
+└── src/                # 실제 서버 프로그램 소스 코드
 ```
 
 ---
@@ -166,6 +139,7 @@ com.koreanit.spring
 ---
 
 ### Application.java 역할
+> Application 클래스는 서버를 시작시키는 역할만 담당하며, 요청 처리나 비즈니스 로직은 절대 작성하지 않는다.
 
 * 서버 프로그램의 **진입점(entry point)**
 * `main()` 메서드 포함
@@ -194,13 +168,36 @@ public class Application {
 
 ---
 
+## Spring Boot 서버 실행
+
+### 실행 명령 (Gradle Wrapper 사용)
+
+```bash
+./gradlew bootRun
+```
+
+### 정상 실행 로그 기준
+
+```text
+Tomcat started on port(s): 8080
+Started SpringServerApplication
+```
+
+### 실행 확인
+
+```text
+http://localhost:8080
+```
+
+---
+
+
 ## 이 장의 핵심 포인트
 
 * Spring Boot 프로젝트는 **정해진 기본 구조**를 가진다
 * 서버 코드는 `main/java`
 * 설정은 `main/resources`
 * **구조 이해가 문법 이해보다 우선**이다
-* 이 프로젝트 구조는 이후 모든 실습의 기준이 된다
 
 ---
 

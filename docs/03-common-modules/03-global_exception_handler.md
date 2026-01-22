@@ -99,28 +99,6 @@ Global Exception Handler는
 
 ---
 
-## 6. 지금 단계에서 하지 않는 것
-
-이 장에서는 다음을 다루지 않는다.
-
-* 프레임워크 애노테이션 상세 설명
-* 예외 상속 구조 심화 설계
-
-지금 단계의 목표는
-**"예외 처리는 여기서 한다"라는 위치 감각**과,
-성공/실패 응답 구조를 **하나로 통합하는 완성 단계**다.
-
----
-
-## 이 장의 핵심 정리
-
-* 예외 처리는 전역에서 한 번만 한다
-* Global Exception Handler는 응답 변환 지점이다
-* Controller는 예외를 던지고 책임에서 벗어난다
-* 일관된 에러 응답은 구조에서 나온다
-
----
-
 ## 실습 목표
 
 * 성공/실패 응답을 `ApiResponse` 한 가지 구조로 통일한다
@@ -151,49 +129,33 @@ Global Exception Handler는
 예시 코드:
 
 ```java
-package com.example.api.common;
+package com.koreanit.spring.common;
 
 public class ApiResponse<T> {
 
-    private boolean success;
-    private String message;
-    private T data;
-    private String code; // 실패 시 사용
+  public boolean success;
+  public String message;
+  public T data;
+  public String code; // 실패 시 사용
 
-    private ApiResponse(boolean success, String message, T data, String code) {
-        this.success = success;
-        this.message = message;
-        this.data = data;
-        this.code = code;
-    }
+  private ApiResponse(boolean success, String message, T data, String code) {
+    this.success = success;
+    this.message = message;
+    this.data = data;
+    this.code = code;
+  }
 
-    public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, "OK", data, null);
-    }
+  public static <T> ApiResponse<T> ok(T data) {
+    return new ApiResponse<>(true, "OK", data, null);
+  }
 
-    public static <T> ApiResponse<T> ok(String message, T data) {
-        return new ApiResponse<>(true, message, data, null);
-    }
+  public static <T> ApiResponse<T> ok(String message, T data) {
+    return new ApiResponse<>(true, message, data, null);
+  }
 
-    public static <T> ApiResponse<T> fail(String code, String message) {
-        return new ApiResponse<>(false, message, null, code);
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public T getData() {
-        return data;
-    }
-
-    public String getCode() {
-        return code;
-    }
+  public static <T> ApiResponse<T> fail(String code, String message) {
+    return new ApiResponse<>(false, message, null, code);
+  }
 }
 ```
 
@@ -207,9 +169,9 @@ public class ApiResponse<T> {
 예시 코드:
 
 ```java
-package com.example.api.error;
+package com.koreanit.spring.error;
 
-import com.example.api.common.ApiResponse;
+import com.koreanit.spring.common.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -218,34 +180,30 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
-        HttpStatus status = mapStatus(e.getErrorCode());
+  @ExceptionHandler(ApiException.class)
+  public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
 
-        return ResponseEntity
-                .status(status)
-                .body(ApiResponse.fail(e.getErrorCode().name(), e.getMessage()));
-    }
+    HttpStatus status = switch (e.getErrorCode()) {
+      case INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
+      case USER_NOT_FOUND -> HttpStatus.NOT_FOUND;
+      case DUPLICATE_RESOURCE -> HttpStatus.CONFLICT;
+      case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
+    };
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR.name(), "서버 오류"));
-    }
+    return ResponseEntity
+        .status(status)
+        .body(ApiResponse.fail(
+            e.getErrorCode().name(),
+            e.getMessage()));
+  }
 
-    private HttpStatus mapStatus(ErrorCode code) {
-        switch (code) {
-            case INVALID_REQUEST:
-                return HttpStatus.BAD_REQUEST;
-            case USER_NOT_FOUND:
-                return HttpStatus.NOT_FOUND;
-            case DUPLICATE_RESOURCE:
-                return HttpStatus.CONFLICT;
-            default:
-                return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-    }
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+    return ResponseEntity
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR.name(), "서버 오류"));
+  }
+  
 }
 ```
 
@@ -258,39 +216,7 @@ public class GlobalExceptionHandler {
 
 ### 3단계: 동작 확인 (성공/실패 응답 비교)
 
-예시 Controller:
-
-```java
-package com.example.api.controller;
-
-import com.example.api.common.ApiResponse;
-import com.example.api.service.UserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-@RequestMapping("/api")
-public class UserController {
-
-    private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-    @GetMapping("/users/{id}")
-    public ApiResponse<String> getUser(@PathVariable Long id) {
-        String name = userService.findUser(id);
-        return ApiResponse.ok(name);
-    }
-}
-```
-
-테스트:
-
-* `/api/users/1` 호출 → 404 + 실패 응답(통일된 포맷)
+* `/api/users/10` 호출 → 404 + 실패 응답(통일된 포맷)
 * 성공 케이스를 만들고 싶다면 `UserService.findUser()`에 임시 성공 분기 추가
 
 ---
@@ -301,6 +227,15 @@ public class UserController {
 * Controller 코드에 try-catch가 없는가?
 * `ApiException`은 전역 핸들러에서만 응답으로 변환되는가?
 * HTTP 상태 코드가 에러 코드와 일관되게 매핑되는가?
+
+---
+
+## 이 장의 핵심 정리
+
+* 예외 처리는 전역에서 한 번만 한다
+* Global Exception Handler는 응답 변환 지점이다
+* Controller는 예외를 던지고 책임에서 벗어난다
+* 일관된 에러 응답은 구조에서 나온다
 
 ---
 
