@@ -7,6 +7,8 @@
 
 ## 1. URL 입력 (브라우저 단계)
 
+![클라이언트-서버 모델](https://lh3.googleusercontent.com/d/1Ytos16Ll_nOcL2KuZw-c8Yv5QvYfIsdt)
+
 사용자가 브라우저 주소창에 다음을 입력한다.
 
 ```
