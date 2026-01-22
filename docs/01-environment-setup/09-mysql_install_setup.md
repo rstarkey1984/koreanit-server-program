@@ -113,24 +113,24 @@ DB_PASSWORD=password
 
 ## 7. 실습용 테이블 생성 및 시드 데이터 추가
 
-### 1. vscode 에서 sql 폴더 생성
+### 1. vscode 에서 `sql` 폴더 생성
 
-### 1. GitHub 강의 사이트 `sql` 경로에 `schema.sql`,`seed_data.sql` 을 다운로드 받아서 생성한 폴더에 넣기
+### 2. GitHub 강의 사이트 `sql` 경로에 `schema.sql`, `seed_data.sql` 을 다운로드 받아서 생성한 폴더에 넣기
 
-### 2. `sql` 폴더 경로로 이동
+### 3. 터미널에서 `sql` 경로로 이동
 
-### 2. (테이블 생성) schema.sql 파일 있는 위치에서 아래 명령 실행:
+### 4. (테이블 생성) schema.sql 파일 있는 위치에서 아래 명령 실행:
 ```bash
 sudo mysql koreanit_service < schema.sql
 ```
 
-### 3. (시드데이터 추가) seed_data.sql 파일 있는 위치에서 아래 명령 실행:
+### 5. (시드데이터 추가) seed_data.sql 파일 있는 위치에서 아래 명령 실행:
 ```bash
 sudo mysql koreanit_service < seed_data.sql
 ```
 
 
-### 4. 확인
+### 6. 확인
 
 ```bash
 sudo mysql koreanit_service -e "SELECT COUNT(*) FROM users;"
