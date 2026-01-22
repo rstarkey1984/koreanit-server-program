@@ -250,5 +250,5 @@ ln -s /var/www ~/projects/koreanit-server/www
 
 ## 다음 단계
 
-→ [**09. MySQL 설치 및 기본 구성**](09-mysql_install_setup.md)
+→ [**01. Spring Boot 프로젝트 생성 및 실행**](/docs/02-server-implementation/01-spring_boot_project_setup.md)
 

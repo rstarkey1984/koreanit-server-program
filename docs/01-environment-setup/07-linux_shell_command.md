@@ -195,4 +195,4 @@ which hello-server
 
 ## 다음 단계
 
-→ [**08. Nginx 웹 서버 설치 및 동작 확인**](08-nginx_install_check.md)
+→ [**08. MySQL 설치 및 기본 구성**](08-mysql_install_setup.md)
