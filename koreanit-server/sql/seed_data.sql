@@ -86,3 +86,4 @@ WHERE 500001 <= n and n <= 1000000;
 SELECT (SELECT COUNT(*) FROM users) AS users_cnt,
        (SELECT COUNT(*) FROM posts) AS posts_cnt,
        (SELECT COUNT(*) FROM comments) AS comments_cnt;
+\
