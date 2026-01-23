@@ -34,11 +34,7 @@ CREATE TABLE posts (
     updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
 
     INDEX idx_posts_user_id (user_id),
-    INDEX idx_posts_created_at (created_at),
-
-    CONSTRAINT fk_posts_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
+    INDEX idx_posts_created_at (created_at)
 );
 
 -- =========================
@@ -53,15 +49,7 @@ CREATE TABLE comments (
     updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
 
     INDEX idx_comments_post_id (post_id),
-    INDEX idx_comments_user_id (user_id),
-
-    CONSTRAINT fk_comments_post
-        FOREIGN KEY (post_id)
-        REFERENCES posts(id),
-
-    CONSTRAINT fk_comments_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
+    INDEX idx_comments_user_id (user_id)
 );
 
 CREATE TABLE user_profiles (
@@ -74,12 +62,7 @@ CREATE TABLE user_profiles (
   updated_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
 
-  PRIMARY KEY (user_id),
-  CONSTRAINT fk_user_profiles_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+  PRIMARY KEY (user_id)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;

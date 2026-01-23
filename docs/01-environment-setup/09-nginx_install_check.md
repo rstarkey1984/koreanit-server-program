@@ -250,5 +250,5 @@ www/html/index.html
 
 ## 다음 단계
 
-→ [**01. Spring Boot 프로젝트 생성 및 실행**](/docs/02-server-implementation/01-spring_boot_project_setup.md)
+→ [**10. 정적 페이지와 동적 페이지**](10-static_vs_dynamic.md)
 
