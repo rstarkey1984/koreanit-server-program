@@ -153,6 +153,7 @@ com.koreanit.spring
 
 1. 서버 프로그램 코드의 시작점
 2. 컴포넌트 스캔 기준 패키지
+> 컴포넌트 스캔 기준이란? Spring이 서버 시작 시, 자동으로 객체(Bean)를 만들 클래스를 찾는 과정
 
 ### 7-2. Application.java 역할
 
@@ -171,6 +172,8 @@ public class Application {
     }
 }
 ```
+
+> `SpringApplication.run()` 은 Spring 컨테이너를 만들고, 필요한 Bean을 전부 준비한 뒤, 내장 웹 서버를 띄워 요청을 받을 수 있는 상태로 만든다.
 
 ---
 

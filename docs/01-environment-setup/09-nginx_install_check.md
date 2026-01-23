@@ -228,10 +228,10 @@ sudo chown -R ubuntu /var/www
 ln -s /var/www ~/projects/koreanit-server/www
 ```
 
-이제 다음 경로에서 웹 파일을 직접 수정할 수 있다.
+이제 VSCode 에서 `~/projects/koreanit-server` 폴더를 열고 다음 경로에서 `index.html` 을 직접 수정할 수 있다.
 
 ```text
-~/www/html/index.html
+www/html/index.html
 ```
 
 예제파일: [index.html](/koreanit-server/www/html/index.html)

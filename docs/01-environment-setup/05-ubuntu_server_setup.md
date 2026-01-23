@@ -150,13 +150,6 @@ ubuntu@ubuntu24:~$
 
 ---
 
-## 다음 단계
-
-→ [**06. Ubuntu 서버 맛보기**](06-ubuntu_server_basic_usage.md)
-
-
----
-
 ## ( 선택 ) 비밀번호 입력 없이 SSH 서버 접속하기 
 
 ### 1. Windows PowerShell에서 SSH 키페어 생성
@@ -209,4 +202,12 @@ ssh ubuntu24
 
 ### 6. VSCode 에서 별칭으로 접속
 ![alt text](/img/vscode-remote-explorer1.png?1)
+
+---
+
+## 다음 단계
+
+→ [**06. Ubuntu 서버 맛보기**](06-ubuntu_server_basic_usage.md)
+
+
 ---
