@@ -253,3 +253,9 @@ http://localhost:8080/api/v1/users/1
 * SELECT SQL만 사용했는가
 * 민감 정보가 내려가지 않는가
 * 계층 간 역할이 섞이지 않았는가
+
+---
+
+## 다음 단계
+
+→ [**회원가입 API (개요 & DTO)**](01-api-overview-dto.md)
