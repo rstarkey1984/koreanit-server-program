@@ -93,15 +93,6 @@ DTO(응답 객체)를 만든다.
   * message
   * data
 
-* ErrorResponse
-
-  * success
-  * message
-  * code
-
-> 실제 클래스 구현은
-> 다음 장의 예외/핸들러와 함께 완성하는 것이 효율적이다.
-
 ---
 
 ## 5. Controller는 공통 포맷만 반환한다
@@ -110,7 +101,8 @@ Controller는
 자유로운 응답을 만들지 않는다.
 
 * 성공이면 `ApiResponse`로 감싼다
-* 실패는 예외로 던지고 공통 처리기에 맡긴다
+
+* 실패는 Service 단계에서 의미있는 예외로 던지고 공통 예외 처리기에 맡긴다
 
 이 원칙이 지켜지면
 API 수가 늘어나도 응답 품질이 유지된다.
@@ -120,19 +112,8 @@ API 수가 늘어나도 응답 품질이 유지된다.
 ## 실습 목표
 
 * 모든 API가 동일한 응답 구조를 반환하도록 만든다
-* Controller에서 직접 JSON을 생성하지 않고 공통 응답 객체를 사용한다
 
----
-
-## 실습 준비
-
-* Spring Boot 프로젝트가 실행 가능한 상태
-* 테스트용 Controller 1개 이상 존재
-
-예:
-
-* `/api/health`
-* `/api/test`
+* Controller에서 직접 객체나 값을 return 하지 않고, 공통 응답 객체를 사용한다
 
 ---
 
@@ -144,7 +125,7 @@ API 수가 늘어나도 응답 품질이 유지된다.
 
 * success (boolean)
 * message (String)
-* data (Generic 또는 Object)
+* data (Generic)
 
 조건:
 
@@ -161,25 +142,19 @@ public class ApiResponse<T> {
     public boolean success;
     public String message;
     public T data;
-    public String code; // 실패 시 사용
 
-    private ApiResponse(boolean success, String message, T data, String code) {
+    private ApiResponse(boolean success, String message, T data) {
         this.success = success;
         this.message = message;
         this.data = data;
-        this.code = code;
     }
 
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, "OK", data, null);
+        return new ApiResponse<>(true, "OK", data);
     }
 
     public static <T> ApiResponse<T> ok(String message, T data) {
-        return new ApiResponse<>(true, message, data, null);
-    }
-
-    public static <T> ApiResponse<T> fail(String code, String message) {
-        return new ApiResponse<>(false, message, null, code);
+        return new ApiResponse<>(true, message, data);
     }
 }
 ```
@@ -199,39 +174,18 @@ public class ApiResponse<T> {
 예시 코드:
 
 ```java
-package com.koreanit.spring.controller;
-
-import com.koreanit.spring.common.ApiResponse;
-import com.koreanit.spring.service.UserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-public class UserController {
-
-    private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
-    @GetMapping("/db-check")
-    public ApiResponse<Integer> dbCheck() {
-        return ApiResponse.ok(userService.checkConnection());
-    }
+@GetMapping("/db-check")
+public ApiResponse<Integer> dbCheck() {
+    return ApiResponse.ok(userService.checkConnection());
 }
+
+@GetMapping("/test")
+public ApiResponse<String> testFunc() {
+    return ApiResponse.ok("test");
+}
+
 ```
 
----
-
-### 3단계: 실패 응답 설계 (개념)
-
-아직 예외 처리는 구현하지 않는다.
-
-다음 질문에 답해본다.
-
-* 실패 응답에는 어떤 필드가 더 필요할까?
-* 클라이언트는 어떤 값을 기준으로 분기 처리할까?
 
 ---
 
@@ -239,7 +193,6 @@ public class UserController {
 
 * 모든 API 응답 구조가 동일한가?
 * Controller마다 응답 포맷이 달라지지 않는가?
-* HTTP 상태 코드와 응답 바디의 역할을 구분했는가?
 
 ---
 

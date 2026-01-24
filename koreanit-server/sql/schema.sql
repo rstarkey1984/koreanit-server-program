@@ -11,7 +11,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- users
 -- =========================
 CREATE TABLE users (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '사용자 PK',
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '사용자 PK',
     username VARCHAR(50) NOT NULL UNIQUE COMMENT '로그인 아이디',
     email VARCHAR(100) UNIQUE COMMENT '이메일 (선택)',
     password VARCHAR(255) NOT NULL COMMENT '비밀번호 해시',
@@ -24,8 +24,8 @@ CREATE TABLE users (
 -- posts
 -- =========================
 CREATE TABLE posts (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 PK',
-    user_id INT UNSIGNED NOT NULL COMMENT '작성자 ID',
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 PK',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '작성자 ID',
     title VARCHAR(200) NOT NULL COMMENT '제목',
     content TEXT NOT NULL COMMENT '내용',
     view_count INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '조회수',
@@ -41,9 +41,9 @@ CREATE TABLE posts (
 -- comments
 -- =========================
 CREATE TABLE comments (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 PK',
-    post_id INT UNSIGNED NOT NULL COMMENT '게시글 ID',
-    user_id INT UNSIGNED NOT NULL COMMENT '댓글 작성자 ID',
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 PK',
+    post_id BIGINT UNSIGNED NOT NULL COMMENT '게시글 ID',
+    user_id BIGINT UNSIGNED NOT NULL COMMENT '댓글 작성자 ID',
     comment VARCHAR(500) NOT NULL COMMENT '댓글 내용',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
     updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
@@ -53,7 +53,7 @@ CREATE TABLE comments (
 );
 
 CREATE TABLE user_profiles (
-  user_id INT UNSIGNED NOT NULL,
+  user_id BIGINT UNSIGNED NOT NULL,
   bio VARCHAR(300) NULL,
   phone VARCHAR(20) NULL,
   birth_date DATE NULL,
@@ -63,6 +63,4 @@ CREATE TABLE user_profiles (
     ON UPDATE CURRENT_TIMESTAMP,
 
   PRIMARY KEY (user_id)
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_general_ci;
+);

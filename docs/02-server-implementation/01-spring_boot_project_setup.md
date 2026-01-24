@@ -175,6 +175,46 @@ public class Application {
 
 > `SpringApplication.run()` 은 Spring 컨테이너를 만들고, 필요한 Bean을 전부 준비한 뒤, 내장 웹 서버를 띄워 요청을 받을 수 있는 상태로 만든다.
 
+### 7-3. Spring Boot 서버의 실제 실행 구조
+
+Spring Boot 서버는
+하나의 컨테이너에서 모든 로직이 실행되는 구조가 아니다.
+
+실제 런타임 구조는 다음과 같다.
+```text
+[Tomcat]
+   ↓ (Servlet 실행)
+[DispatcherServlet]
+   ↓ (Spring Bean 사용)
+[Controller / Service / Repository]
+```
+
+구조 해석:
+
+1. Tomcat(서블릿 컨테이너)
+
+    - 포트를 열고(8080)
+
+    - HTTP 요청을 수신한다
+
+    - DispatcherServlet을 실행한다
+
+2. DispatcherServlet
+
+    - 서블릿 컨테이너에 의해 실행되는 Servlet
+
+    - 요청을 직접 처리하지 않고
+
+    - Spring 컨테이너에 등록된 Bean들에게 처리를 위임한다
+
+3. Spring Container (ApplicationContext)
+
+    - Controller / Service / Repository 객체를 생성·관리
+
+    - DispatcherServlet은 이 객체들을 사용해 요청을 처리한다
+
+> 즉, Spring Boot 서버는 Tomcat이 DispatcherServlet을 실행하고, DispatcherServlet이 Spring 컨테이너의 Bean을 사용해 요청을 처리하는 구조다.
+
 ---
 
 ## 8. main/resources 영역

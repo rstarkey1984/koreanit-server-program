@@ -10,8 +10,7 @@ TRUNCATE TABLE users;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =========================
--- 1) numbers 테이블 생성 (1 ~ 1,000,000)
---    한번 만들어두면 계속 재사용 가능
+-- 1) numbers 테이블 생성 (1 ~ 100,000)
 -- =========================
 DROP TABLE IF EXISTS numbers;
 CREATE TABLE numbers (
@@ -19,7 +18,7 @@ CREATE TABLE numbers (
 ) ENGINE=InnoDB;
 
 INSERT INTO numbers (n)
-SELECT a.i + b.i*10 + c.i*100 + d.i*1000 + e.i*10000 + f.i*100000 + 1 AS n
+SELECT a.i + b.i*10 + c.i*100 + d.i*1000 + e.i*10000 + 1 AS n
 FROM (SELECT 0 i UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
       UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a
 CROSS JOIN (SELECT 0 i UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
@@ -29,12 +28,11 @@ CROSS JOIN (SELECT 0 i UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 
 CROSS JOIN (SELECT 0 i UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
       UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) d
 CROSS JOIN (SELECT 0 i UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
-      UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) e
-CROSS JOIN (SELECT 0 i UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
-      UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) f;
+      UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) e;
+
 
 -- =========================
--- 2) users 10000명
+-- 2) users 10000
 -- =========================
 INSERT INTO users (username, email, password, nickname)
 SELECT
@@ -46,7 +44,7 @@ FROM numbers
 WHERE n <= 10000;
 
 -- =========================
--- 3) posts 1,000,000개 
+-- 3) posts 100,000
 -- =========================
 INSERT INTO posts (user_id, title, content, view_count, created_at)
 SELECT
@@ -56,31 +54,19 @@ SELECT
   n % 500 AS view_count,
   NOW() - INTERVAL (n % 365) DAY AS created_at
 FROM numbers
-WHERE n <= 1000000;
+WHERE n <= 100000;
 
 -- =========================
--- 4) comments 500,000개 
+-- 4) comments 100,000
 -- =========================
 INSERT INTO comments (post_id, user_id, comment, created_at)
 SELECT
-  1 + (n % 1000000) AS post_id,
+  1 + (n % 100000) AS post_id,
   1 + (n % 10000)     AS user_id,
   CONCAT('댓글 내용 ', n),
   NOW() - INTERVAL (n % 365) DAY AS created_at
 FROM numbers
-WHERE n <= 500000;
-
--- =========================
--- 4) comments 500,000개 
--- =========================
-INSERT INTO comments (post_id, user_id, comment, created_at)
-SELECT
-  1 + (n % 1000000) AS post_id,
-  1 + (n % 10000)     AS user_id,
-  CONCAT('댓글 내용 ', n),
-  NOW() - INTERVAL (n % 365) DAY AS created_at
-FROM numbers
-WHERE 500001 <= n and n <= 1000000;
+WHERE n <= 100000;
 
 -- (선택) 확인
 SELECT (SELECT COUNT(*) FROM users) AS users_cnt,

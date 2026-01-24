@@ -180,44 +180,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(ApiException.class)
-  public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
+        ErrorCode code = e.getErrorCode();
 
-    HttpStatus status = switch (e.getErrorCode()) {
-      case INVALID_REQUEST -> HttpStatus.BAD_REQUEST;
-      case USER_NOT_FOUND -> HttpStatus.NOT_FOUND;
-      case DUPLICATE_RESOURCE -> HttpStatus.CONFLICT;
-      case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
-    };
+        return ResponseEntity
+                .status(code.getStatus())
+                .body(ApiResponse.fail(code.name(), e.getMessage()));
+    }
 
-    return ResponseEntity
-        .status(status)
-        .body(ApiResponse.fail(
-            e.getErrorCode().name(),
-            e.getMessage()));
-  }
-
-  @ExceptionHandler(Exception.class)
-  public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-    return ResponseEntity
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR.name(), "서버 오류"));
-  }
-  
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR.name(), "서버 오류"));
+    }
 }
 ```
 
-포인트:
-
-* Controller는 예외를 처리하지 않는다
-* 상태 코드는 `ErrorCode`에 의해 결정된다
-
----
-
-### 3단계: 동작 확인 (성공/실패 응답 비교)
-
-* `/api/users/10` 호출 → 404 + 실패 응답(통일된 포맷)
-* 성공 케이스를 만들고 싶다면 `UserService.findUser()`에 임시 성공 분기 추가
 
 ---
 
@@ -241,4 +221,4 @@ public class GlobalExceptionHandler {
 
 ## 다음 단계
 
-→ [**요청 로깅 전략**](/docs/03-common-modules/04-request_logging.md)
+→ [**요청 로깅 전략 (Filter 기반)**](/docs/03-common-modules/04-request-logging-strategy.md)

@@ -46,7 +46,7 @@ Service는 **비즈니스 로직을 담당하는 계층**이다.
 핵심 원칙:
 
 > Service는 HTTP를 모른다.
-> Request/Response, URL, Controller 어노테이션을 사용하지 않는다.
+> Request/Response, URL, Controller 애너테이션을 사용하지 않는다.
 > 순수한 자바 로직만 가진다.
 
 ---

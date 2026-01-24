@@ -69,7 +69,7 @@ public class HealthController {
 
 핵심은 `@RestController`다.
 
-이 어노테이션이 붙은 클래스는:
+이 애너테이션이 붙은 클래스는:
 
 * HTTP 요청 처리 역할을 가지며
 * Spring Container에 의해 **자동으로 Bean 등록**된다
@@ -82,25 +82,19 @@ public class HealthController {
 
 ## 5. Bean 등록 방식
 
-### 5-1. 컴포넌트 스캔 방식 (기본)
+### 컴포넌트 스캔 방식 (기본)
 
-다음 어노테이션이 붙은 클래스는 자동으로 Bean이 된다.
+다음 애너테이션이 붙은 클래스는 자동으로 Bean이 된다.
 
-* `@RestController`
-* `@Service`
-* `@Repository`
-* `@Component`
+| 애너테이션                                         | 의미           |
+| --------------------------------------------- | ------------ |
+| `@Component`                                  | 기본 Bean      |
+| `@Service`                                    | 서비스 역할 Bean  |
+| `@Repository`                                 | 저장소 역할 Bean  |
+| `@RestController`                             | 컨트롤러 Bean    |
+| `@ControllerAdvice` / `@RestControllerAdvice` | 전역 컨트롤러 Bean |
 
-실무와 강의에서 가장 많이 사용하는 방식이다.
 
----
-
-### 5-2. @Bean 수동 등록 방식
-
-설정 클래스에서 메서드 반환값을 Bean으로 등록한다.
-
-* 객체 생성 로직을 직접 제어할 때
-* 라이브러리 객체, 설정 객체 등록 시 사용
 
 ---
 
@@ -140,13 +134,6 @@ Bean의 기본 Scope는 **singleton**이다.
 
 * 애플리케이션 전체에서 하나의 객체만 생성
 * 여러 요청이 같은 Bean을 공유
-
-| Scope     | 의미            |
-| --------- | ------------- |
-| singleton | 기본값, 1개 객체 공유 |
-| prototype | 요청 시마다 새 객체   |
-| request   | HTTP 요청당      |
-| session   | 세션당           |
 
 Controller, Service, Repository는 기본적으로 singleton이다.
 

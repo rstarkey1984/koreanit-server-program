@@ -100,8 +100,8 @@ DB 연결이 정상인지 확인하기 위해
 가장 단순한 쿼리를 실행해본다.
 
 ```java
-public Integer findOne() {
-  return jdbcTemplate.queryForObject("SELECT 1", Integer.class);
+public Integer selectOne() {
+  return jdbcTemplate.queryForObject("SELECT id from users limit 1", Integer.class);
 }
 ```
 
@@ -135,7 +135,7 @@ public class UserService {
     }
 
     public Integer checkConnection() {
-        return userRepository.findOne();
+        return userRepository.selectOne();
     }
 }
 ```
@@ -204,4 +204,4 @@ HTTP 요청
 
 ## 다음 단계
 
-→ [**01. 공통 응답 포맷**](09-layer_connection_overview.md)
+→ [**01. 공통 응답 포맷**](/docs/03-common-modules/01-common_response_format.md)
