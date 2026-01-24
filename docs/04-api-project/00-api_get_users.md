@@ -1,6 +1,6 @@
 # API 서버 시작 – 유저 조회 API (GET 리스트 / 단건)
 
-이 장에서 목표는 **Controller → Service → Repository** 흐름을 한 번에 연결하는 것이다.
+> 이 장에서 목표는 **Controller → Service → Repository** 흐름을 한 번에 연결하는 것이다.
 
 ---
 
@@ -58,7 +58,7 @@ Repository는 DB 접근 전용 계층이다.
 
 ---
 
-### 3-1. findAll()
+## 3-1. findAll()
 
 ```java
 package com.koreanit.spring.repository;
@@ -181,7 +181,7 @@ JdbcTemplate이 여러 줄을 돌면서
 
 ---
 
-### 3-2. findById()
+## 3-2. findById()
 
 ```java
 public UserResponse findById(int id) {
