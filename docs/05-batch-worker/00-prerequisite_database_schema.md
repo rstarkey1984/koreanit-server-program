@@ -56,9 +56,7 @@ CREATE TABLE news (
   PRIMARY KEY (id),
   UNIQUE KEY uk_news_source_link (source_key, link),
   KEY idx_news_published_at (published_at)
-) ENGINE=InnoDB
-  DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_general_ci;
+);
 ```
 
 ---
