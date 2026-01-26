@@ -191,4 +191,4 @@ Controller → Service
 
 ## 다음 단계
 
-→ [**06. Repository 계층의 역할과 책임**](06-repository_layer.md)
+→ [**Repository 계층의 역할과 책임**](08-repository_layer.md)

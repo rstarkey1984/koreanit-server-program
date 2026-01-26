@@ -258,4 +258,4 @@ Controller → Service → Repository
 다음 장에서는
 Repository 계층이 **실제 데이터베이스와 연결되는 방식(JDBC 커넥션 풀)** 을 다룬다.
 
-→ [**07. 데이터베이스 연결(JDBC 커넥션 풀)**](07-jdbc_connection_pool.md)
+→ [**데이터베이스 연결(JDBC 커넥션 풀)**](09-jdbc_connection_pool.md)

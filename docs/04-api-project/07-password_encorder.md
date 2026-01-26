@@ -1,9 +1,6 @@
 # 비밀번호 암호화 적용 (PasswordEncoder)
 
-이 문서에서는 회원가입 시 **비밀번호를 평문으로 저장하지 않고**,
-Spring Security의 `PasswordEncoder`를 사용해 **암호화(해시)** 하여 저장한다.
-
-> 목표는 구현보다 **원칙을 정확히 잡는 것**이다.
+이 문서에서는 회원가입 시 **비밀번호를 평문으로 저장하지 않고**, `PasswordEncoder`를 사용해 **단방향 해시(암호화)** 값으로 저장한다.
 
 ---
 
@@ -17,17 +14,15 @@ Spring Security의 `PasswordEncoder`를 사용해 **암호화(해시)** 하여 �
 
 그래서 서버에서는 항상 다음 원칙을 따른다.
 
-> **비밀번호의 ‘원문(plain text)’은 저장하지 않는다.
+> **비밀번호의 ‘원문(plain text)’은 저장하지 않는다.**
 > 대신 단방향 해시 값만 저장하고,
-> 로그인 시에는 같은 방식으로 해시해 비교(검증) 한다.**
+> 로그인 시에는 `matches`로 비교(검증) 한다.
 
 ---
 
 ## 2. 사용할 방식: BCrypt
 
 > BCrypt는 Salt와 반복 연산을 포함해 비밀번호를 느리게 해시하는 비밀번호 전용 알고리즘이다.
-
-Spring Security에서 기본으로 사용하는 방식은 **BCrypt**다.
 
 특징:
 
@@ -39,57 +34,29 @@ Spring Security에서 기본으로 사용하는 방식은 **BCrypt**다.
 
 ## 2-1. Gradle 의존성 추가 (필수)
 
-`PasswordEncoder`와 `BCryptPasswordEncoder`는
-**Spring Security 모듈에 포함된 클래스**다.
-
-따라서 Gradle 설정에
-Spring Security starter를 추가해야 한다.
+`PasswordEncoder`, `BCryptPasswordEncoder`는 **Spring Security의 crypto 모듈**에 포함되어 있다.
 
 ### build.gradle
 
 ```gradle
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-crypto'
 }
 ```
 
-#### ⚠️ 반드시 알아야 할 점
-
-spring-boot-starter-security를 추가하는 순간, 
-
-- 서버 전체에 Security 필터 체인이 자동 적용된다
-- 모든 요청이 기본적으로 인증 대상이 된다
-- 별도 설정이 없으면
-
-    - 기본 로그인 페이지가 생성되고
-    - 임시 계정(user)이 자동으로 만들어진다
-
-즉,
-
-> spring-boot-starter-security는 보안을 “옵션으로 더하는” 의존성이 아니라, 서버를 “기본 차단 상태”로 바꾸는 의존성이다.
-
-이 때문에 단순히 `PasswordEncoder` 를 사용하려고 의존성을 추가했더라도,    
-보안 설정(`SecurityConfig`)을 반드시 함께 정의해야 한다.
-
 ---
 
-## 3. `PasswordEncoder`, `Bean` 등록
+## 3. `PasswordEncoder` Bean 등록
 
 비밀번호 암호화를 위해 `PasswordEncoder`를 `Bean`으로 등록한다.
 
 ### 3-1. 전용 Configuration 클래스 생성 (권장)
 
-현재 프로젝트에는 **명시적인 `@Configuration` 클래스가 없다**.
-지금까지는 Spring Boot의 **자동 설정**만으로 동작해왔다.
-
-직접 `Bean` 을 정의해야 하는 시점부터
-전용 설정 클래스를 하나 만든다.
-
 권장 구조:
 
 ```text
 config/
-└── SecurityConfig.java
+└── CryptoConfig.java
 ```
 
 ```java
@@ -97,35 +64,11 @@ package com.koreanit.spring.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-public class SecurityConfig {
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        return http
-            // CSRF 보호 기능 비활성화
-            // - 세션/폼 기반 인증을 사용하지 않는 API 서버 단계
-            // - POST, PUT 요청이 403으로 막히는 것을 방지
-            .csrf(csrf -> csrf.disable())
-
-            // 요청에 대한 인가(권한) 규칙 설정
-            .authorizeHttpRequests(auth -> auth
-                // 모든 요청(URL, HTTP 메서드)을 인증 없이 허용
-                // - 로그인 필요 없음
-                // - 권한 검사 없음
-                .anyRequest().permitAll()
-            )
-
-            // 위에서 정의한 설정을 기반으로
-            // SecurityFilterChain 객체를 생성하여 Spring에 등록
-            .build();
-    }
+public class CryptoConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -136,8 +79,8 @@ public class SecurityConfig {
 
 ### `@Configuration` + `@Bean` 한 세트 의미
 
-> **`@Configuration`은 “이 클래스는 설정용이다”라는 표시이고,
-> `@Bean`은 “이 메서드를 실행해서 나온 객체를 Spring이 관리해라”라는 표시다.**
+> **`@Configuration`은 “이 클래스는 설정용이다”라는 표시이고,**
+> **`@Bean`은 “이 메서드를 실행해서 나온 객체를 Spring이 관리해라”라는 표시다.**
 
 ---
 
@@ -157,8 +100,6 @@ public class SecurityConfig {
 * 객체는 기본적으로 **한 번만 생성(싱글톤)**
 * 클래스 안에 있지만 **로직이 아닌 설정 선언 역할**을 한다
 
-
-
 ---
 
 ## 4. PasswordEncoder 주입 방식
@@ -176,7 +117,7 @@ public UserService(UserRepository userRepository, PasswordEncoder passwordEncode
 
 ## 5. Service에서 비밀번호 해시 적용
 
-회원가입 Service 로직에서 **저장 직전에 해시** 를 사용한다.
+회원가입 Service 로직에서 **저장 직전에 해시**를 적용한다.
 
 ### 기존 코드 (문제)
 
@@ -188,8 +129,6 @@ long userId = userRepository.insertUser(
     req.email
 );
 ```
-
----
 
 ### 수정 코드
 
@@ -204,13 +143,139 @@ long userId = userRepository.insertUser(
 );
 ```
 
+원칙:
+
 * 암호화 책임은 **Service**에 있다
-* Repository는 서비스가 보내는 값만 믿고 쓴다.
+* Repository는 **서비스가 준 값을 그대로 저장**한다
+
+---
+
+## 6. (로그인 단계) 비밀번호 검증은 `matches`
+
+로그인에서는 DB에 저장된 해시값과, 사용자가 입력한 비밀번호를 비교한다.
+
+```java
+boolean ok = passwordEncoder.matches(inputPassword, savedHash);
+
+if (!ok) {
+    throw new RuntimeException("비밀번호 불일치");
+}
+```
+
+포인트:
+
+* BCrypt는 같은 비밀번호라도 `encode` 결과가 매번 다르다
+* 따라서 로그인에서 `encode(input)`로 문자열 비교를 하면 안 된다
+* 반드시 `matches(평문, 해시)`로 검증한다
+
+---
+
+## 7. 테스트 API 페이지(개발/실습용)
+
+목표:
+
+* 서버가 정상 실행되는지 확인
+* `PasswordEncoder` Bean 주입이 되는지 확인
+* `encode / matches` 동작을 **눈으로 확인**
+
+> 이 테스트 엔드포인트는 **개발/실습용**이다. 운영에서는 제거하거나 접근을 제한한다.
+
+### 7-1. 테스트용 Controller 생성
+
+```java
+package com.koreanit.spring.controller;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+public class PasswordTestController {
+
+    private final PasswordEncoder passwordEncoder;
+
+    public PasswordTestController(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    /**
+     * 비밀번호 해시 테스트 API
+     * 예: /test/password?password=1234
+     */
+    @GetMapping("/test/password")
+    public Map<String, Object> test(@RequestParam String password) {
+
+        String encoded = passwordEncoder.encode(password);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("input", password);
+        result.put("encoded", encoded);
+        result.put("match_self", passwordEncoder.matches(password, encoded));
+
+        return result;
+    }
+
+    /**
+     * 비밀번호 검증 테스트 API
+     * 예: /test/password/match?input=1234&hash=$2a$10$...
+     */
+    @GetMapping("/test/password/match")
+    public Map<String, Object> match(
+        @RequestParam String input,
+        @RequestParam String hash
+    ) {
+        boolean ok = passwordEncoder.matches(input, hash);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("input", input);
+        result.put("hash", hash);
+        result.put("match", ok);
+
+        return result;
+    }
+}
+```
+
+### 7-2. 호출 방법
+
+브라우저에서 직접 접속:
+
+* `http://localhost:8080/test/password?password=1234`
+
+예상 결과 예시:
+
+```json
+{
+  "input": "1234",
+  "encoded": "$2a$10$....",
+  "match_self": true
+}
+```
+
+포인트:
+
+* `encoded` 값은 **매번 바뀐다**
+* 그런데 `match_self`는 항상 `true`
+* → BCrypt는 “문자열이 같아야 하는 방식”이 아니라 “검증 로직”이 핵심
+
+---
+
+## 정리
+
+* 비밀번호는 **평문 저장 금지**
+* 저장 전 `encode`
+* 로그인 검증은 `matches`
+* `spring-boot-starter-security`는 “필터체인/로그인 프레임워크”까지 켜므로
+  **비밀번호 해시만 필요한 단계에서는 사용하지 않는다**
+* 대신 `spring-security-crypto`만 추가한다
 
 ---
 
 ## 다음 단계
 
-* 로그인 시 비밀번호 검증 (`matches`)
-* 트랜잭션 경계 설정 (`@Transactional`)
-* 회원가입 + 로그인 흐름 완성
+* 회원가입 + 로그인 흐름 완성(회원가입 encode / 로그인 matches)
+* 예외 처리 표준(ApiException/GlobalExceptionHandler) 적용

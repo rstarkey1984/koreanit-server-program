@@ -61,6 +61,57 @@ public class HelloController {
 }
 ```
 
+이 코드는 **Spring Boot 서버에서 가장 단순한 Controller 구현**이다.
+
+* `/hello` 라는 주소로 요청이 들어오면
+* `hello()` 메서드가 실행되고
+* 문자열을 HTTP 응답으로 그대로 반환한다
+
+---
+
+#### `@RestController`
+
+* 이 클래스가 **HTTP 요청을 처리하는 Controller**임을 의미한다
+* 메서드의 반환값을 **View(html)가 아닌 응답 데이터**로 처리한다
+* 문자열, 객체 모두 **HTTP Response Body**로 바로 전달된다
+
+> 즉, `@RestController`에서는
+> **return = 응답 데이터**다
+
+---
+
+#### `@GetMapping("/hello")`
+
+* HTTP **GET 요청**을 처리한다
+* 요청 경로는 `/hello`
+* 이 요청이 들어오면 아래 메서드가 실행된다
+
+Spring Boot는
+이 URL ↔ 메서드 연결을 자동으로 처리한다.
+
+---
+
+#### `public String hello()`
+
+* Controller 메서드는 반드시 `public`
+* 반환 타입 `String`은 **응답 데이터의 타입**이다
+* 메서드 이름은 중요하지 않다
+
+  * URL과의 연결은 어노테이션이 담당한다
+
+---
+
+#### `return "Hello Spring Server";`
+
+* 클라이언트에게 전달될 실제 응답 내용
+* 브라우저에서는 화면에 그대로 출력된다
+
+> 이 시점에서 중요한 것은
+> **비즈니스 로직이 전혀 없다는 점**이다
+
+Controller의 목적은
+요청이 들어오고 응답이 나가는 흐름을 확인하는 것이다.
+
 ---
 
 ## 4. 서버 실행 및 확인
@@ -101,9 +152,6 @@ Hello Spring Server
 * 이 요청이 들어오면
   `hello()` 메서드가 실행된다
 
-Spring Boot는
-이 연결을 자동으로 처리해준다.
-
 ---
 
 ## 6. JSON 응답으로 바꿔보기
@@ -139,8 +187,6 @@ public Map<String, String> helloJson() {
 메서드가 **객체를 return**하면,
 Spring Boot는 이 객체를 **HTTP 응답(JSON)** 으로 자동 변환한다.
 
-이 과정에서 개발자가 직접 작성한 코드는 없다.
-
 ```java
 return result;
 ```
@@ -160,11 +206,6 @@ return 값을 **뷰 이름**으로 해석한다.
 * 화면(View)을 찾지 않는다
 * 문자열, 객체 모두 **응답 데이터**로 처리한다
 
-즉,
-
-> `@RestController`에서는
-> **return = 응답 데이터**다
-
 ---
 
 ### 7-2. 객체를 JSON으로 변환한다
@@ -176,12 +217,12 @@ public Map<String, String> helloJson()
 여기서 반환된 `Map` 객체는
 Spring 내부에서 **JSON 변환 과정**을 거친다.
 
-이때 사용되는 것이:
+사용되는 구성 요소:
 
 * **HttpMessageConverter**
 * 기본 JSON 라이브러리: **Jackson**
 
-Spring의 처리 흐름은 다음과 같다.
+처리 흐름:
 
 ```text
 Controller return (객체)
@@ -193,25 +234,21 @@ Jackson으로 JSON 직렬화
 HTTP Response Body에 작성
 ```
 
-개발자는 JSON 문자열을 직접 만들 필요가 없다.
-
 ---
 
-### 7-3. Content-Type도 자동으로 설정된다
+### 7-3. Content-Type 자동 설정
 
-응답 헤더에 자동으로 포함된다.
+응답 헤더에 자동 포함된다.
 
 ```http
 Content-Type: application/json;charset=UTF-8
 ```
 
-이 역시 Controller 코드에서 설정하지 않았다.
+Controller 코드에서 직접 설정하지 않았다.
 
 ---
 
 ### 7-4. 이 구조의 핵심 의미
-
-이 방식의 핵심은 명확하다.
 
 * Controller는
 
@@ -229,10 +266,10 @@ Content-Type: application/json;charset=UTF-8
 * Controller는 요청/응답 담당
 * `@RestController`는 JSON 응답용
 * Controller는 가볍게 유지한다
-* 로직은 다음 단계로 넘긴다
+* 비즈니스 로직은 다음 단계(Service)로 이동한다
 
 ---
 
 ## 다음 단계
 
-→ [**05. Service 계층 구현**](05-service_layer.md)
+→ [**VS Code REST Client 사용법**](05-vscode_rest_client.md)

@@ -183,4 +183,4 @@ API 응답과 브라우저 DOM은 동일하지 않음
 다음 장에서는
 이 객체를 생성하고 관리하는 주체인 **Spring Container와 Bean 개념**을 정리한다.
 
-→ [**03. Spring Container와 Bean**](03-spring_bean.md)
+→ [**Spring Container와 Bean**](03-spring_bean.md)

@@ -4,7 +4,7 @@
 
 공식설치가이드 - https://learn.microsoft.com/ko-kr/windows/wsl/install
 
-### WSL2 사용하려면 Windows 10 22H2 버전 이상 필요
+> **(중요) WSL2 사용하려면 Windows 10 22H2 버전 이상 필요**
 
 ---
 

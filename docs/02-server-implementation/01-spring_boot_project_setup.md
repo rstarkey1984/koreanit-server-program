@@ -25,6 +25,8 @@
 1. **Spring Initializr ZIP 생성 방식** 사용
 2. [https://start.spring.io](https://start.spring.io)
 
+![start.pring.io](/img/spring-init.png)
+
 ### 이 방식을 사용하는 이유
 
 1. IDE 종속 없음
@@ -83,27 +85,142 @@ spring/
 
 ---
 
-## 5. Gradle 관련 핵심 파일
+## 5. Gradle 관련 핵심 파일 정리
 
-### 5-1. build.gradle
+> **Gradle은 프로젝트의 제작 설명서다.**
+> 어떻게 만들고, 어떤 라이브러리를 쓰고, 어떻게 실행할지 전부 여기서 결정된다.
 
-1. 프로젝트 **빌드 설정 파일**
-2. 의존성(dependencies) 관리
-3. Java / Spring Boot 버전 기준 관리
+---
 
-> 서버 동작 방식은 이 파일을 기준으로 결정된다
+## 5-1. build.gradle
 
-### 5-2. gradlew (Gradle Wrapper)
+### 1. 역할 요약
 
-1. 로컬 Gradle 설치 없이 빌드 및 실행 가능
+`build.gradle`은 **프로젝트의 기준 설계서**다.
 
-주요 명령어:
+이 파일에서 결정되는 것:
+
+* 프로젝트 빌드 방식
+* 사용하는 라이브러리(의존성)
+* Java / Spring Boot 버전
+* 실행 및 패키징 방식
+
+> **서버의 동작 방식은 `build.gradle`을 기준으로 결정된다**
+
+---
+
+### 2. 핵심 의존성: spring-boot-starter-web
+
+```gradle
+implementation 'org.springframework.boot:spring-boot-starter-web'
+```
+
+> **HTTP 요청을 받아 JSON으로 응답하는 웹 서버를 만들기 위한 기본 스타터**
+
+이 한 줄로 웹 서버에 필요한 기능들이 한 번에 포함된다.
+
+---
+
+### 3. 포함된 핵심 구성 요소
+
+#### ① 내장 웹 서버
+
+* Tomcat 기본 포함
+* 별도 서버 설치 불필요
+* `main()` 실행만으로 서버 기동
+
+→ **자바 프로그램 자체가 웹 서버가 된다**
+
+---
+
+#### ② Spring MVC (웹 프레임워크)
+
+* `@Controller`, `@RestController`
+* `@GetMapping`, `@PostMapping`
+* `@RequestParam`, `@PathVariable`
+
+> HTTP 요청 → 컨트롤러 → 메서드 → 응답
+
+이 흐름을 만들어주는 핵심 구조
+
+---
+
+#### ③ JSON 자동 변환
+
+* Jackson 라이브러리 포함
+* Java 객체 ↔ JSON 자동 변환
+
+```java
+return Map.of("status", "ok");
+```
+
+→ 자동으로 JSON 응답
+
+---
+
+#### ④ HTTP 기본 처리 기능
+
+* 요청 파라미터 자동 바인딩
+* HTTP 상태 코드 처리
+* 기본 예외 → HTTP 에러 응답 변환
+
+→ **웹 서버로서 필요한 최소 기능 세트**
+
+---
+
+### 4. 이 스타터로 가능한 것
+
+* REST API 서버 구현
+* 프론트엔드(Vue / React)와 JSON 통신
+* Postman / 브라우저 테스트
+* 백엔드 API 서버 구축
+
+---
+
+## 5-2. gradlew (Gradle Wrapper)
+
+> **프로젝트에 포함된 전용 Gradle 실행기**
+
+### 왜 필요한가?
+
+* PC에 Gradle 설치 불필요
+* 서버 환경이 달라도 동일한 Gradle 버전 사용
+* 프로젝트별 실행 환경 강제
+
+---
+
+### 주요 명령어
 
 ```bash
-./gradlew bootRun   # 서버 실행
-./gradlew build     # 전체 빌드
-./gradlew bootJar   # 실행 가능한 jar 생성
+./gradlew bootRun
 ```
+
+* 개발용 서버 실행
+* 코드 수정 시 즉시 반영
+
+```bash
+./gradlew build
+```
+
+* 전체 빌드 수행
+* 테스트 + 컴파일 + 패키징
+
+```bash
+./gradlew bootJar
+```
+
+* 실행 가능한 JAR 파일 생성
+* 운영 서버 배포용 파일
+
+---
+
+## 핵심 요약
+
+* `build.gradle` → 프로젝트 설계도
+* `spring-boot-starter-web` → 웹 서버 풀세트
+* `gradlew` → 실행 환경 통일 도구
+* `gradlew bootRun` → 개발 실행
+* `gradlew bootJar` → 배포 파일 생성
 
 ---
 
@@ -137,7 +254,7 @@ src/
 │       │
 │       └── application.yml       # 서버 설정 파일
 │
-└── test/                          # 테스트 코드
+└── test/                         # 테스트 코드
     └── java/
 ```
 
@@ -175,45 +292,82 @@ public class Application {
 
 > `SpringApplication.run()` 은 Spring 컨테이너를 만들고, 필요한 Bean을 전부 준비한 뒤, 내장 웹 서버를 띄워 요청을 받을 수 있는 상태로 만든다.
 
-### 7-3. Spring Boot 서버의 실제 실행 구조
+## 7-3. Spring Boot 서버의 실제 실행 구조
 
 Spring Boot 서버는
-하나의 컨테이너에서 모든 로직이 실행되는 구조가 아니다.
+**하나의 프로그램 안에서 모든 로직이 직접 실행되는 구조가 아니다.**
 
-실제 런타임 구조는 다음과 같다.
+실제 런타임에서는
+**서블릿 컨테이너와 Spring 컨테이너가 역할을 나눠서 동작**한다.
+
 ```text
 [Tomcat]
-   ↓ (Servlet 실행)
+   ↓ (HTTP 요청 수신 / Servlet 실행)
 [DispatcherServlet]
-   ↓ (Spring Bean 사용)
-[Controller / Service / Repository]
+   ↓ (요청 위임)
+[Spring Container]
+   ↓
+[Controller → Service → Repository]
 ```
 
-구조 해석:
+---
 
-1. Tomcat(서블릿 컨테이너)
+## 구조별 역할 해석
 
-    - 포트를 열고(8080)
+### 1. Tomcat (서블릿 컨테이너)
 
-    - HTTP 요청을 수신한다
+* 8080 포트를 열어 외부 HTTP 요청을 받는다
+* 요청이 들어오면 **Servlet 규칙에 따라 Servlet을 실행**한다
+* Spring Boot에서는 이 Servlet이 **DispatcherServlet**이다
 
-    - DispatcherServlet을 실행한다
+> Tomcat은
+> “웹 서버 + 서블릿 실행기” 역할만 담당한다
+> 비즈니스 로직은 전혀 모른다
 
-2. DispatcherServlet
+---
 
-    - 서블릿 컨테이너에 의해 실행되는 Servlet
+### 2. DispatcherServlet
 
-    - 요청을 직접 처리하지 않고
+* Tomcat에 의해 실행되는 **하나의 Servlet**
+* 모든 요청의 **진입 지점(front controller)** 역할
+* 요청 URL, HTTP 메서드(GET/POST 등)를 분석한 뒤
+  **어떤 Controller가 처리할지 결정**한다
+* 직접 로직을 처리하지 않고
+  Spring 컨테이너에 있는 Bean들에게 처리를 위임한다
 
-    - Spring 컨테이너에 등록된 Bean들에게 처리를 위임한다
+> DispatcherServlet은
+> “중앙 교통 정리자”다
+> 실제 일은 하지 않고, 누구에게 맡길지만 판단한다
 
-3. Spring Container (ApplicationContext)
+---
 
-    - Controller / Service / Repository 객체를 생성·관리
+### 3. Spring Container (ApplicationContext)
 
-    - DispatcherServlet은 이 객체들을 사용해 요청을 처리한다
+* `@Controller`, `@Service`, `@Repository`가 붙은 클래스를
+  **객체(Bean)로 생성하고 관리**
+* 객체 생성, 의존성 주입, 생명주기 관리 담당
+* DispatcherServlet은
+  **이 컨테이너에 있는 객체를 꺼내서 사용**한다
 
-> 즉, Spring Boot 서버는 Tomcat이 DispatcherServlet을 실행하고, DispatcherServlet이 Spring 컨테이너의 Bean을 사용해 요청을 처리하는 구조다.
+> Controller / Service / Repository는
+> Tomcat이 아니라 **Spring 컨테이너가 만든 객체**다
+
+---
+
+## 전체 흐름 
+
+```
+요청 도착
+  ↓
+DispatcherServlet
+  ↓
+HandlerMapping  →  @GetMapping 메서드 결정
+  ↓
+HandlerAdapter  →  파라미터 바인딩 + 메서드 호출
+  ↓
+Controller 메서드 실행
+```
+
 
 ---
 
@@ -224,7 +378,7 @@ Spring Boot 서버는
 1. 서버 설정 파일
 2. 포트, DB 연결 정보, 로그 레벨 관리
 
-> 현재 단계에서는 수정하지 않는다
+> 현재 단계에서는 수정하지 않는다.
 > 설정은 **필요해지는 시점에만 추가**한다
 
 ---
@@ -262,6 +416,13 @@ http://localhost:8080
    * API 서버임을 명확히 표시
    * Controller / DB 없이 동작 구조 이해
 
+3. 기본 화면 파일 위치
+```text
+src/main/resources/static/index.html
+```
+예제파일: [index.html](/koreanit-server/spring/src/main/resources/static/index.html)
+
+
 ---
 
 ## 11. 정적 리소스 동작 원리
@@ -275,16 +436,8 @@ src/main/resources/static/
 
 ---
 
-## 12. 기본 화면 파일 위치
 
-```text
-src/main/resources/static/index.html
-```
-예제파일: [index.html](/koreanit-server/spring/src/main/resources/static/index.html)
-
----
-
-## 13. 실행 확인 절차
+## 12. 실행 확인 절차
 
 1. 서버 실행
 
@@ -317,4 +470,4 @@ http://localhost:8080
 
 ## 다음 단계
 
-→ [**02. 간단한 서버 동작 확인 실습**](02-health_check.md)
+→ [**간단한 서버 동작 확인 실습**](02-health_check.md)

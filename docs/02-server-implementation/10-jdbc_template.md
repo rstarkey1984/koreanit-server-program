@@ -158,4 +158,4 @@ JdbcTemplate을 사용해도
 
 ## 다음 단계
 
-→ [**09. Controller–Service–Repository–JdbcTemplate 연결 구조**](09-layer_connection_overview.md)
+→ [**Controller–Service–Repository–JdbcTemplate 연결 구조**](11-layer_connection_overview.md)
