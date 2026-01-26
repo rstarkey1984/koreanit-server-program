@@ -183,7 +183,7 @@ return Map.of("status", "ok");
 
 ### 왜 필요한가?
 
-* PC에 Gradle 설치 불필요
+* Gradle 설치 불필요
 * 서버 환경이 달라도 동일한 Gradle 버전 사용
 * 프로젝트별 실행 환경 강제
 

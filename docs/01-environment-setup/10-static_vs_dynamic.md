@@ -178,4 +178,4 @@ public String hello() {
 
 ## 다음 단계
 
-→ [**01. Spring Boot 프로젝트 생성 및 실행**](/docs/02-server-implementation/01-spring_boot_project_setup.md)
+→ [**자바 → 스프링부트 개념 맵**](/docs/02-server-implementation/00-java_springboot.md)
