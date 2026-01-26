@@ -290,5 +290,5 @@ DTO를 `dto/user` 하위에 두는 이유는 **기능 단위 기준으로 API를
 
 ## 다음 단계
 
-→ [**02. Controller 구현 – 회원가입 엔드포인트 추가**](02-controller-signup.md)
+→ [**Controller 구현 – 회원가입 엔드포인트 추가**](02-controller-signup.md)
 

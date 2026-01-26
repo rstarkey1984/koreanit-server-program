@@ -144,4 +144,4 @@ private boolean isBlank(String s) {
 
 ## 다음 단계
 
-[**04. VS Code REST Client 사용법**](04-vscode_rest_client.md)
+[**Repository SQL 구현 (count / insert)**](04-repository-sql.md)

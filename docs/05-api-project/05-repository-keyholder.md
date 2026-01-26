@@ -1,4 +1,4 @@
-# 06. Repository – 생성된 PK 반환 (KeyHolder)
+# Repository – 생성된 PK 반환 (KeyHolder)
 
 이 문서에서는 `insertUser()`가 **임시값(1L)** 을 반환하던 것을 제거하고,
 DB가 생성한 **AUTO_INCREMENT PK(id)** 를 실제로 받아 반환하도록 개선한다.
@@ -112,4 +112,4 @@ import org.springframework.jdbc.support.KeyHolder;
 
 ## 다음 단계
 
-[**비밀번호 해시 적용 (PasswordEncoder)**](07-password_encorder.md)
+[**비밀번호 해시 적용 (PasswordEncoder)**](06-password_encorder.md)

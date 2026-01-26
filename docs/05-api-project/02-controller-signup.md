@@ -123,4 +123,4 @@ Controller 책임 정리:
 * 사용자 저장 (`insertUser`)
 * 실패 시 `ApiException` 발생
 
-→ [**03. Service 회원가입 로직 구현**](03-service-signup.md)
+→ [**Service 회원가입 로직 구현**](03-service-signup.md)

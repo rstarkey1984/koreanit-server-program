@@ -1,4 +1,4 @@
-# 05. Repository SQL 구현 (count / insert)
+# Repository SQL 구현 (count / insert)
 
 이 문서에서는 `UserRepository`의 메서드 중
 회원가입에 필요한 **조회(count)** 와 **저장(insert)** SQL을 구현한다.
@@ -131,4 +131,4 @@ public long insertUser(String username,
 
 ## 다음 단계
 
-[**06. Repository – 생성된 PK 반환**](06-repository-keyholder.md)
+[**Repository – 생성된 PK 반환**](05-repository-keyholder.md)
