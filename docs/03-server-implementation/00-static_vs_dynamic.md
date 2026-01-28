@@ -178,4 +178,6 @@ public String hello() {
 
 ## 다음 단계
 
-→ [**자바 → 스프링부트 개념 맵**](/docs/02-server-implementation/00-java_springboot.md)
+## 다음 단계
+
+→ [**간단한 서버 동작 확인 실습**](01-spring_boot_project_setup.md)

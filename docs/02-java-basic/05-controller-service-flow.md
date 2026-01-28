@@ -263,10 +263,7 @@ public class UserController {
     }
 
     public String hello(Map<String, Object> body) {
-
-        System.out.println("[Controller] body 수신");
-        System.out.println(body);
-
+      
         // Controller는 판단/검증하지 않는다
         // Service가 만든 결과를 그대로 return
         // Service가 던진 예외도 그대로 위로 전파
