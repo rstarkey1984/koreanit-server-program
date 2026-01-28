@@ -1,4 +1,4 @@
-# 08. Dispatcher 개념을 순수 자바로 먼저 만들기
+# Dispatcher 개념을 순수 자바로 먼저 만들기
 
 이 장에서는 **요청 분배 책임**을 App에서 분리하여,
 전용 컴포넌트인 **Dispatcher**를 도입한다.
@@ -235,4 +235,4 @@ Spring은 이 과정을 자동화해준다.
 
 ## 다음 단계 예고
 
-* Global Exception 처리
+→ [**Global Exception 처리 개념을 순수 자바로 먼저 만들기**](09-global-exception.md)

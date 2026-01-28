@@ -1,4 +1,4 @@
-# 07. Repository 분리와 App에서 3계층 조립
+# Repository 분리와 App에서 3계층 조립
 
 이 장에서는 **새로운 요구사항(데이터 개념의 등장)** 을 계기로 Repository 계층을 추가하고,
 
@@ -355,4 +355,4 @@ java App user1 /unknown
 
 ## 다음 단계
 
-* Dispatcher / 요청 분배 구조로 확장
+→ [**Dispatcher 개념을 순수 자바로 먼저 만들기**](08-dispatcher.md)

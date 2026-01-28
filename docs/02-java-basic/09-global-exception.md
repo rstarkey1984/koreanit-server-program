@@ -1,4 +1,4 @@
-# 09. Global Exception 처리 개념을 순수 자바로 먼저 만들기
+# Global Exception 처리 개념을 순수 자바로 먼저 만들기
 
 이 장에서는 **예외 처리 책임**을 App에서 분리하여,
 전용 컴포넌트인 **ExceptionHandler(Resolver)** 를 도입한다.
