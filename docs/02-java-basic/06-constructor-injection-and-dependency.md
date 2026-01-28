@@ -163,9 +163,6 @@ public class UserController {
     }
 
     public String hello(Map<String, Object> body) {
-        System.out.println("[Controller] body 수신");
-        System.out.println(body);
-
         // Controller는 판단하지 않고, Service에 위임한다
         return userService.getHelloMessage(body);
     }
@@ -250,6 +247,59 @@ Spring Boot에서는 이 역할을 **Spring Container**가 대신 수행한다.
 * `@Service`
 
 지금은 수동으로 하지만, **개념은 동일**하다.
+
+---
+
+# 실습: 생성자 주입 구조에서 Service 교체
+
+### 목적
+
+Controller 수정 없이 Service 구현을 교체할 수 있는 구조임을 코드로 확인한다.
+
+---
+
+### 실습 내용
+
+임시 Service 클래스를 하나 추가한다.
+
+```java
+package com.koreanit.spring;
+
+import java.util.Map;
+
+public class FakeUserService extends UserService {
+
+    @Override
+    public String getHelloMessage(Map<String, Object> body) {
+        return "[TEST] fake service response";
+    }
+}
+```
+
+`App`에서 사용하는 Service를 교체한다.
+
+```java
+UserService service = new FakeUserService();
+UserController controller = new UserController(service);
+```
+
+---
+
+### 확인 사항
+
+* Controller 코드는 수정하지 않는다
+* 전달한 Service 구현에 따라 실행 결과가 달라진다
+* Controller는 Service의 생성 방식이나 구현 내용을 알지 않는다
+
+---
+
+### 정리
+
+생성자 주입 구조에서는
+Service 구현을 교체해도 Controller 코드를 변경할 필요가 없다.
+
+이는 객체 생성 책임과 사용 책임이 분리되어 있기 때문이다.
+
 
 ---
 

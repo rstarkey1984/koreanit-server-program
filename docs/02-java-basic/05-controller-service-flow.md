@@ -389,6 +389,155 @@ Repository (@Repository)
 
 ---
 
+# 실습단계
+
+이 장의 실습은
+**Service가 판단을 담당하고, Controller는 흐름만 전달한다**는 구조를
+직접 코드 수정으로 체감하는 데 목적이 있다.
+
+---
+
+## 실습 1. Service에 비즈니스 규칙 추가하기
+
+### 목적
+
+* 판단 로직은 Service에만 위치한다
+* 정상 흐름과 실패 흐름을 코드로 분리한다
+
+---
+
+### 실습 내용
+
+다음 규칙을 `UserService`에 추가한다.
+
+* 나이는 0 미만일 수 없다
+* 나이는 150을 초과할 수 없다
+
+```java
+if (age < 0 || age > 150) {
+    throw new IllegalArgumentException("나이는 0~150 사이여야 합니다");
+}
+```
+
+---
+
+### 실습 결과 흐름
+
+* 정상 입력
+  → Service가 문자열을 return
+  → Controller를 거쳐 App에서 출력
+
+* 잘못된 입력
+  → Service에서 예외 발생
+  → Controller를 거쳐 App에서 catch
+
+---
+
+### 핵심 정리
+
+> 판단이 필요한 규칙은
+> Controller가 아니라 Service에 위치한다
+
+---
+
+## 실습 2. 예외 타입 변경하기
+
+### 목적
+
+* 예외의 종류보다 중요한 것은 **예외가 발생하는 위치**다
+* 구조가 유지되면 흐름은 변하지 않는다
+
+---
+
+### 실습 내용
+
+Service에서 던지는 예외 타입을 변경한다.
+
+```java
+throw new RuntimeException("사용할 수 없는 사용자입니다");
+```
+
+---
+
+### 실습 결과 흐름
+
+* Controller 코드는 변경되지 않는다
+* App의 `catch(Exception e)` 구조도 유지된다
+* 예외 메시지만 달라진다
+
+---
+
+### 핵심 정리
+
+> 예외 타입보다 중요한 것은
+> Service에서 판단하고 App에서 처리하는 구조다
+
+---
+
+## 실습 3. 로그 책임 위치 정리
+
+### 목적
+
+* 출력과 로그도 하나의 책임임을 인식한다
+* Service가 불필요한 출력 책임을 갖지 않도록 한다
+
+---
+
+### 실습 내용
+
+* Service 내부의 `System.out.println` 제거
+* 출력은 App에서만 수행
+
+예:
+
+```java
+System.out.println("[App] result = " + result);
+```
+
+---
+
+### 구조적 의미
+
+* Service
+  → 판단과 결과 생성만 담당
+
+* App
+  → 실행 결과와 오류 메시지 출력 담당
+
+---
+
+## 실습 전체 요약
+
+이 실습을 통해 정리되는 역할은 다음과 같다.
+
+* Controller
+  → 요청을 전달하고 흐름을 유지한다
+
+* Service
+  → 비즈니스 규칙을 판단한다
+  → 정상은 return, 실패는 throw 한다
+
+* App(main)
+  → 최종 실행 지점
+  → 예외를 처리하고 메시지를 출력한다
+
+이 구조는 이후
+
+```text
+Controller → Service → Repository
+```
+
+그리고 Spring의
+
+```text
+@RestController → @Service → @Repository
+```
+
+로 그대로 확장된다.
+
+
+---
+
 ## 다음 단계
 
 의존성 연결을 명확히 하고

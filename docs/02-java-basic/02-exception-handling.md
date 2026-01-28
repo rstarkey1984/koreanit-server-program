@@ -42,12 +42,12 @@ Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException
 
 * `java.lang.ArrayIndexOutOfBoundsException`
 
-  * **배열의 범위를 벗어난 인덱스에 접근했다**는 뜻이다
+  * 배열의 범위를 벗어난 인덱스에 접근했다는 뜻이다
   * `args` 배열에 0번 인덱스가 존재하지 않는다
 
 * `args[0]`
 
-  * 프로그램 실행 시 전달된 **명령행 인자 배열의 첫 번째 값**
+  * 프로그램 실행 시 전달된 명령행 인자 배열의 첫 번째 값
   * 인자를 주지 않고 실행하면 `args.length == 0`
 
 * `in thread "main"`
@@ -58,7 +58,7 @@ Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException
 * 예외 메시지가 그대로 출력됨
 
   * 이 예외를 처리하는 `try-catch`가
-    **호출 스택 어디에도 존재하지 않았다**는 뜻이다
+    호출 스택 어디에도 존재하지 않았다는 뜻이다
 
 ---
 
@@ -76,7 +76,7 @@ public class App {
         try {
             System.out.println(args[0]);
         } catch (Exception e) {
-            e.printStackTrace(); 
+            e.printStackTrace();
         }
 
         System.out.println("자바 프로그램 종료");
@@ -84,32 +84,28 @@ public class App {
 }
 ```
 
-실행 결과:
-
-* 예외 발생
-* catch에서 처리
-* 프로그램은 정상 종료까지 실행됨
-
 ---
 
 ### `Exception e` 의미
+
 > Exception 타입이거나, 그 자식 타입이면 전부 잡겠다
 
 예외 계층 핵심 구조
+
 ```
 Throwable
  └─ Exception
      ├─ RuntimeException
      │   ├─ NullPointerException
-     │   ├─ IndexOutOfBoundsException -> ArrayIndexOutOfBoundsException
+     │   ├─ IndexOutOfBoundsException
+     │   │    └─ ArrayIndexOutOfBoundsException
      │   ├─ IllegalArgumentException
      │   └─ ...
-     └─ (Checked Exception 계열)
+     └─ Checked Exception 계열
          ├─ IOException
          ├─ SQLException
          └─ ...
 ```
-
 
 ---
 
@@ -136,7 +132,7 @@ if (args.length == 0) {
 try {
     System.out.println(args[0]);
 } catch (Exception e) {
-    e.printStackTrace(); 
+    e.printStackTrace();
 }
 ```
 
@@ -148,16 +144,12 @@ try {
 
 ### 핵심 기준
 
-> **예측 가능하면 if**
-> **예측 불가능하면 exception**
-
-이 기준은 Spring Service 설계에서도 그대로 사용된다.
+> 예측 가능하면 if
+> 예측 불가능하면 exception
 
 ---
 
 ## 5. 예외를 던지기 (throw)
-
-예외를 직접 발생시킬 수도 있다.
 
 ```java
 if (args.length == 0) {
@@ -165,21 +157,20 @@ if (args.length == 0) {
 }
 ```
 
-> 이 지점에서 정상 실행 흐름을 중단하고,
-예외 객체(IllegalArgumentException)를 호출한 메서드(상위 호출자) 로 전달한다.
+* 정상 실행 흐름을 즉시 중단한다
+* 예외 객체를 생성한다
+* 호출한 쪽(상위 호출자)으로 예외를 전달한다
 
 ---
 
 # 실습: Error.java로 예외 흐름 맛보기
 
 이 장에서는 **예외가 발생하면 흐름이 어떻게 끊기는지**만 확인한다.
-아직 호출 스택, 전파 개념은 깊게 다루지 않는다.
+아직 호출 스택과 전파 개념은 깊게 다루지 않는다.
 
 ---
 
 ## 1. Error.java 파일 생성
-
-`src/Error.java`
 
 ```java
 public class Error {
@@ -205,36 +196,22 @@ public class Error {
 
 ### 1) 인자 없이 실행
 
-```bash
-java Error
-```
-
-확인할 것:
-
-* `args[0]`에서 예외 발생
-* `try 블록 정상 종료`는 출력되지 않음
-* `catch에서 예외 처리`는 출력됨
-* 프로그램은 종료까지 실행됨
+* 예외 발생
+* try 블록 중단
+* catch 실행
+* 프로그램 종료까지 실행됨
 
 ---
 
 ### 2) 인자를 주고 실행
 
-```bash
-java Error hello
-```
-
-확인할 것:
-
-* 예외가 발생하지 않음
-* try 블록 내부 코드가 모두 실행됨
-* catch 블록은 실행되지 않음
+* 예외 없음
+* try 블록 전체 실행
+* catch 미실행
 
 ---
 
 ## 3. try-catch 제거 실습
-
-`try-catch`를 제거하고 다시 실행해본다.
 
 ```java
 public static void main(String[] args) {
@@ -244,18 +221,89 @@ public static void main(String[] args) {
 }
 ```
 
-확인할 것:
+* 예외 발생 시 즉시 종료
+* 이후 코드는 실행되지 않음
 
-* 인자 없이 실행 시 프로그램이 즉시 종료됨
-* `프로그램 종료`는 출력되지 않음
-* 예외 메시지는 JVM이 출력함
-
----
-
-## 4. 한 문장 정리
 
 > 예외가 발생하면 그 지점 이후 코드는 실행되지 않고,
 > 잡히지 않으면 프로그램은 즉시 종료된다.
+
+---
+
+## 4. 실습: 특정 예외만 catch 해보기
+
+### 4-1. ArrayIndexOutOfBoundsException만 처리
+
+```java
+try {
+    System.out.println(args[0]);
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("인자값이 없습니다");
+}
+```
+
+* 실제 발생한 예외 타입만 잡는다
+* JVM 에러 메시지는 출력되지 않는다
+
+---
+
+### 4-2. 다른 예외는 잡히지 않는다
+
+```java
+try {
+    String s = null;
+    System.out.println(s.length());
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("배열 인덱스 예외");
+}
+```
+
+* NullPointerException 발생
+* catch 되지 않음
+* 프로그램 즉시 종료
+
+---
+
+### 4-3. 여러 예외를 각각 처리하기
+
+```java
+try {
+    System.out.println(args[0]);
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("인자 예외");
+} catch (NullPointerException e) {
+    System.out.println("null 오류");
+}
+```
+
+* 위에서부터 순서대로 검사
+* 하나만 실행됨
+
+---
+
+### 4-4. Exception은 마지막에 둔다
+
+```java
+try {
+    System.out.println(args[0]);
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("인자 예외");
+} catch (Exception e) {
+    System.out.println("그 외 모든 예외");
+}
+```
+
+
+> 예외는 타입으로 흐름을 분기하며,
+> catch는 지정한 예외 타입만 처리한다.
+
+---
+
+## 실습 핵심 요약
+
+* 예외는 **타입으로 흐름을 분기**한다
+* try-catch는 **프로그램 흐름 제어 장치**다
+* catch 하지 않으면 예외는 상위로 전달되고, 끝까지 가면 종료된다
 
 ---
 

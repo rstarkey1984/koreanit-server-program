@@ -219,7 +219,7 @@ java App /ping
 
 ---
 
-## 8. Spring으로의 연결
+## Spring으로의 연결
 
 이 Dispatcher는 Spring의 핵심 클래스와 정확히 대응된다.
 
@@ -233,6 +233,6 @@ Spring은 이 과정을 자동화해준다.
 
 ---
 
-## 다음 단계 예고
+## 다음 단계
 
 → [**Global Exception 처리 개념을 순수 자바로 먼저 만들기**](09-global-exception.md)

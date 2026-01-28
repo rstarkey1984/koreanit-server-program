@@ -271,7 +271,7 @@ catch (Exception e) {
 }
 ```
 
-## 7. 한 문장 정리
+## 한 문장 정리
 
 > 예외는 발생한 메서드에서 멈추고,
 > 처리 가능한 catch를 만날 때까지
@@ -286,7 +286,6 @@ catch (Exception e) {
 * `Global Exception Handler` → controller 밖에서 일괄 처리
 
 이 구조가 Spring 예외 처리의 그대로인 형태다.
-
 
 ---
 

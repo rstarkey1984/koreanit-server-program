@@ -296,6 +296,147 @@ Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 0 out
 > 즉, 자바 프로그램은
 > **예외가 발생하고 처리되지 않으면 정상적으로 종료되지 않는다**
 
+---
+
+# 실습단계
+
+## 실습 1. main이 모든 실행의 시작점임을 확인하기
+
+### 목적
+
+* 자바 프로그램은 **항상 main부터 시작**한다는 사실을 코드로 확인한다
+* 실행 흐름이 **위에서 아래로 내려간다**는 감각을 잡는다
+
+### 과제
+
+`main` 안에서 메서드를 하나 더 호출하고,
+출력 순서를 직접 확인하라.
+
+### 코드 예시
+
+```java
+public class App {
+
+    public static void main(String[] args) {
+        System.out.println("main 시작");
+        hello();
+        System.out.println("main 종료");
+    }
+
+    static void hello() {
+        System.out.println("hello 메서드 실행");
+    }
+}
+```
+
+### 실행 결과 확인
+
+```text
+main 시작
+hello 메서드 실행
+main 종료
+```
+
+### 확인 포인트
+
+* 프로그램은 **main부터 시작**한다
+* 다른 메서드는 **main이 호출해야만 실행**된다
+
+---
+
+## 실습 2. args는 외부 입력이며, 검증 없으면 터진다
+
+### 목적
+
+* `args`는 **외부에서 들어오는 값**임을 이해한다
+* 입력값 검증을 하지 않으면 **Runtime 예외가 발생**함을 직접 경험한다
+
+### 과제
+
+아래 코드를 실행하고,
+인자를 줄 때 / 안 줄 때 결과를 비교하라.
+
+### 코드
+
+```java
+public class App {
+
+    public static void main(String[] args) {
+        System.out.println("전달된 값: " + args[0]);
+        System.out.println("프로그램 종료");
+    }
+}
+```
+
+### 실행 1 (정상)
+
+```bash
+java App hello
+```
+
+### 실행 2 (에러)
+
+```bash
+java App
+```
+
+### 확인 포인트
+
+* 컴파일은 정상
+* 실행 중에 **ArrayIndexOutOfBoundsException 발생**
+* 입력값 검증이 없으면 프로그램은 **언제든 깨진다**
+
+---
+
+## 실습 3. 예외를 처리하지 않으면 JVM이 프로그램을 종료한다
+
+### 목적
+
+* 예외가 발생했을 때 **프로그램이 왜 즉시 종료되는지** 이해한다
+* `try-catch`가 **흐름 제어**라는 감각을 잡는다
+
+### 과제
+
+실습 2의 코드를 `try-catch`로 감싸고 실행 결과를 비교하라.
+
+### 코드
+
+```java
+public class App {
+
+    public static void main(String[] args) {
+
+        try {
+            System.out.println("전달된 값: " + args[0]);
+        } catch (Exception e) {
+            System.out.println("[에러 발생] " + e.getClass().getSimpleName());
+        }
+
+        System.out.println("[App] 정상 종료");
+    }
+}
+```
+
+### 실행 (인자 없이)
+
+```bash
+java App
+```
+
+### 실행 결과
+
+```text
+[에러 발생] ArrayIndexOutOfBoundsException
+[App] 정상 종료
+```
+
+### 확인 포인트
+
+* 예외는 발생했다
+* 하지만 **잡았기 때문에 프로그램은 끝까지 실행**됐다
+* 예외 처리는 메시지 출력이 아니라
+  **프로그램 흐름을 어디서 끊을지 결정하는 구조**다
+
 
 ---
 
