@@ -210,4 +210,4 @@ spring:
 
 ## 다음 단계
 
-→ [**jdbcTemplate 사용법**](10-jdbc_template.md)
+→ [**jdbcTemplate 사용법**](09-jdbc_template.md)

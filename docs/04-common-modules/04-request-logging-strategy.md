@@ -115,7 +115,7 @@ Filter는 다음 특징을 가진다.
 파일 경로:
 
 ```text
-src/main/java/com/koreanit/spring/logging/AccessLogFilter.java
+logging/AccessLogFilter.java
 ```
 
 Spring Boot에서는 `OncePerRequestFilter`를 사용한다.
@@ -212,25 +212,7 @@ try {
 
 ## 6. 동작 확인
 
-테스트 API 호출:
-
-```text
-GET /db-check
-```
-
-콘솔 로그 예시:
-
-```text
-GET /db-check -> 200 (3 ms)
-```
-
-에러가 발생해도:
-
-```text
-GET /db-check -> 500 (12 ms)
-```
-
-처럼 **요청당 1줄**만 남는다.
+테스트 API 호출해보기
 
 ---
 
@@ -244,5 +226,5 @@ GET /db-check -> 500 (12 ms)
 
 ## 다음 단계
 
-→ [**API 서버 시작 – 유저 조회 API (GET 리스트 / 단건)**](/docs/04-api-project/00-api_get_users.md)
+→ **API 프로젝트 시작**
 

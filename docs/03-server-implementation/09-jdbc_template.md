@@ -155,7 +155,6 @@ JdbcTemplate을 사용해도
 * Service는 JdbcTemplate을 모른다
 * 구조가 먼저이고, SQL은 나중이다
 
-
 ## 다음 단계
 
-→ [**Controller–Service–Repository–JdbcTemplate 연결 구조**](11-layer_connection_overview.md)
+→ [**Repository 계층의 역할과 책임**](10-repository_layer.md)

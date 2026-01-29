@@ -68,6 +68,9 @@ src/main/java/com/koreanit/spring/service
 ```java
 package com.koreanit.spring.service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -76,6 +79,14 @@ public class HelloService {
     public String helloMessage() {
         return "Hello from Service";
     }
+
+    public Map<String, String> helloMessageJSON() {
+        Map<String, String> result = new HashMap<>();
+        result.put("message", "Hello JSON");
+        result.put("date", LocalDateTime.now().toString());
+        return result;
+    }
+
 }
 ```
 
@@ -91,6 +102,7 @@ Controller 코드를 수정한다.
 package com.koreanit.spring.controller;
 
 import com.koreanit.spring.service.HelloService;
+import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -106,6 +118,11 @@ public class HelloController {
     @GetMapping("/hello")
     public String hello() {
         return helloService.helloMessage();
+    }
+
+    @GetMapping("/hello/json")
+    public Map<String, String> helloJson() {
+        return helloService.helloMessageJSON();
     }
 }
 ```
@@ -191,4 +208,4 @@ Controller → Service
 
 ## 다음 단계
 
-→ [**Repository 계층의 역할과 책임**](08-repository_layer.md)
+→ [**데이터베이스 연결(JDBC 커넥션 풀)**](08-jdbc_connection_pool.md)

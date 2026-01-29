@@ -7,7 +7,6 @@ API 응답을 **하나의 공통 포맷으로 통일**하는 기준을 만든다
 프론트엔드/클라이언트는 일관된 방식으로 성공/실패를 처리할 수 있고,
 서버는 에러 처리와 로깅을 표준화할 수 있다.
 
-
 ---
 
 ## 1. 왜 응답 포맷을 통일해야 하는가
@@ -40,16 +39,6 @@ API를 여러 개 만들기 시작하면
   "success": true,
   "message": "OK",
   "data": {}
-}
-```
-
-### 실패 응답
-
-```json
-{
-  "success": false,
-  "message": "에러 메시지",
-  "code": "ERROR_CODE"
 }
 ```
 
@@ -101,7 +90,6 @@ Controller는
 자유로운 응답을 만들지 않는다.
 
 * 성공이면 `ApiResponse`로 감싼다
-
 * 실패는 Service 단계에서 의미있는 예외로 던지고 공통 예외 처리기에 맡긴다
 
 이 원칙이 지켜지면
@@ -112,7 +100,6 @@ API 수가 늘어나도 응답 품질이 유지된다.
 ## 실습 목표
 
 * 모든 API가 동일한 응답 구조를 반환하도록 만든다
-
 * Controller에서 직접 객체나 값을 return 하지 않고, 공통 응답 객체를 사용한다
 
 ---
@@ -139,15 +126,19 @@ package com.koreanit.spring.common;
 
 public class ApiResponse<T> {
 
-    public boolean success;
-    public String message;
-    public T data;
+    private final boolean success;
+    private final String message;
+    private final T data;
 
     private ApiResponse(boolean success, String message, T data) {
         this.success = success;
         this.message = message;
         this.data = data;
     }
+
+    public boolean isSuccess() { return success; }
+    public String getMessage() { return message; }
+    public T getData() { return data; }
 
     public static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>(true, "OK", data);
@@ -156,40 +147,94 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> ok(String message, T data) {
         return new ApiResponse<>(true, message, data);
     }
+
+    public static ApiResponse<Void> ok() {
+        return new ApiResponse<>(true, "OK", null);
+    }
+
+    public static ApiResponse<Void> ok(String message) {
+        return new ApiResponse<>(true, message, null);
+    }
 }
 ```
 
----
-
-### 2단계: Controller 응답 통일
-
-기존 Controller 코드를 수정하여
-정상 응답 시 항상 공통 응답 객체를 반환하도록 변경한다.
-
-요구사항:
-
-* HTTP 상태 코드는 기존 의미에 맞게 유지한다
-* 응답 바디 구조는 모든 API에서 동일해야 한다
-
-예시 코드:
-
-```java
-@GetMapping("/db-check")
-public ApiResponse<Integer> dbCheck() {
-    return ApiResponse.ok(userService.checkConnection());
-}
-
-@GetMapping("/test")
-public ApiResponse<String> testFunc() {
-    return ApiResponse.ok("test");
-}
-
-```
-
-
----
 
 ### 제네릭 타입
+
+`ApiResponse<T>`에서 `<T>`는 **응답 data의 타입을 고정하지 않고 상황에 따라 바꾸기 위한 장치**다.
+
+예를 들어 API마다 `data`에 들어가는 타입이 다르다.
+
+```java
+ApiResponse<String>
+ApiResponse<Integer>
+ApiResponse<UserDto>
+ApiResponse<List<UserDto>>
+```
+
+공통 응답의 "형태"는 유지하면서도,
+각 API의 "결과 데이터" 타입을 정확히 담을 수 있다.
+
+---
+### 2단계: HelloController 응답 공통 모듈 적용
+
+기존코드
+```java
+@GetMapping("/hello/users")
+public List<UserRow> users() {
+  return helloService.users();
+}
+
+@GetMapping("/hello/users/{id}")
+public UserRow user(@PathVariable Long id) {
+  return helloService.user(id);
+}
+
+@GetMapping("/hello/posts")
+public List<PostRow> posts() {
+  return helloService.posts();
+}
+
+@GetMapping("/hello/posts/{id}")
+public PostRow post(@PathVariable Long id) {
+  return helloService.post(id);
+}
+```
+변경후:
+```java
+@GetMapping("/hello/users")
+public ApiResponse<List<UserRow>> users() {
+  return ApiResponse.ok(helloService.users());
+}
+
+@GetMapping("/hello/users/{id}")
+public ApiResponse<UserRow> user(@PathVariable Long id) {
+  return ApiResponse.ok(helloService.user(id));
+}
+
+@GetMapping("/hello/posts")
+public ApiResponse<List<PostRow>> posts() {
+  return ApiResponse.ok(helloService.posts());
+}
+
+@GetMapping("/hello/posts/{id}")
+public ApiResponse<PostRow> post(@PathVariable Long id) {
+  return ApiResponse.ok(helloService.post(id));
+}
+```
+
+변경후 응답:
+```
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "id": 12,
+    "username": "user12",
+    "email": "user12@test.com"
+  }
+}
+```
 
 ---
 

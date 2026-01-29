@@ -311,4 +311,4 @@ Repository를 분리해서
 Controller → Service → Repository
 ```
 
-→ [**객체 생성과 의존성 연결**](07-repository-layer-and-three-tier-assembly.md)
+→ [**Repository 분리와 App에서 3계층 조립**](07-repository-layer-and-three-tier-assembly.md)

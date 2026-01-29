@@ -27,10 +27,8 @@ Spring Boot API를 테스트하는 방법을 정리한 강의용 문서다.
 
 ## 3. 요청 파일 생성
 
-프로젝트 루트 아래에 파일을 생성한다.
-
 ```text
-api.http
+spring/.http/api.http
 ```
 
 ---
@@ -38,8 +36,11 @@ api.http
 ## 4. GET 요청 예제
 
 ```http
-### GET 요청
+### GET health
 GET http://localhost:8080/health
+
+### GET health/check 
+GET http://localhost:8080/health/check?name=test&count=1
 ```
 
 ---
@@ -60,6 +61,18 @@ REST Client 응답 탭에서 다음을 확인할 수 있다.
 }
 ```
 
+## 6. 변수 사용
+
+```
+@host = http://localhost:8080
+
+### GET health
+GET {{host}}/health
+
+### GET health/check 
+GET {{host}}/health/check?name=test&count=1
+```
+
 ---
 
 ## 핵심 요약
@@ -69,4 +82,4 @@ REST Client 응답 탭에서 다음을 확인할 수 있다.
 
 ## 다음 단계
 
-[**Controller 요청 데이터 파싱**](06-controller_data_parse.md)
+[**Controller 요청 데이터 바인딩 실습 (TestController)**](05-controller_data_parse.md)

@@ -126,34 +126,45 @@ Global Exception Handler는
 * 성공 응답: `success=true`, `message`, `data`
 * 실패 응답: `success=false`, `message`, `code`
 
-예시 코드:
-
 ```java
 package com.koreanit.spring.common;
 
 public class ApiResponse<T> {
 
-  public boolean success;
-  public String message;
-  public T data;
-  public String code; // 실패 시 사용
+    private final boolean success;
+    private final String message;
+    private final T data;
+    private final String code;
 
-  private ApiResponse(boolean success, String message, T data, String code) {
-    this.success = success;
-    this.message = message;
-    this.data = data;
-    this.code = code;
-  }
+    private ApiResponse(boolean success, String message, T data, String code) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+        this.code = code;
+    }
 
-  public static <T> ApiResponse<T> ok(T data) {
-    return new ApiResponse<>(true, "OK", data, null);
-  }
+    public boolean isSuccess() { return success; }
+    public String getMessage() { return message; }
+    public T getData() { return data; }
+    public String getCode() { return code; }
 
-  public static <T> ApiResponse<T> ok(String message, T data) {
-    return new ApiResponse<>(true, message, data, null);
-  }
+    public static <T> ApiResponse<T> ok(T data) {
+        return new ApiResponse<>(true, "OK", data, null);
+    }
 
-  public static <T> ApiResponse<T> fail(String code, String message) {
+    public static <T> ApiResponse<T> ok(String message, T data) {
+        return new ApiResponse<>(true, message, data, null);
+    }
+
+    public static ApiResponse<Void> ok() {
+        return new ApiResponse<>(true, "OK", null, null);
+    }
+
+    public static ApiResponse<Void> ok(String message) {
+        return new ApiResponse<>(true, message, null, null);
+    }
+
+    public static <T> ApiResponse<T> fail(String code, String message) {
     return new ApiResponse<>(false, message, null, code);
   }
 }
@@ -166,14 +177,10 @@ public class ApiResponse<T> {
 `@RestControllerAdvice`를 사용해 예외를 잡고,
 `ApiResponse.fail()`로 변환해 반환한다.
 
-예시 코드:
-
 ```java
 package com.koreanit.spring.error;
 
 import com.koreanit.spring.common.ApiResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -182,36 +189,59 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger log =
-        LoggerFactory.getLogger(GlobalExceptionHandler.class);
+  @ExceptionHandler(ApiException.class)
+  public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
+    ErrorCode code = e.getErrorCode();
 
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
-        ErrorCode code = e.getErrorCode();
+    e.printStackTrace();
 
-        log.warn("[API_EXCEPTION] code={}, message={}",
-                 code.name(), e.getMessage());
+    // ResponseEntity는 “HTTP 상태코드 + 응답 데이터”를 함께 담는 응답 객체
+    return ResponseEntity.status(code.getStatus())
+        .body(ApiResponse.fail(code.name(), e.getMessage()));
+  }
 
-        return ResponseEntity
-                .status(code.getStatus())
-                .body(ApiResponse.fail(code.name(), e.getMessage()));
-    }
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+    e.printStackTrace();
 
-        log.error("[UNHANDLED_EXCEPTION]", e);
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail(
-                        ErrorCode.INTERNAL_ERROR.name(),
-                        "서버 오류"
-                ));
-    }
+    // ResponseEntity는 “HTTP 상태코드 + 응답 데이터”를 함께 담는 응답 객체
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR.name(), "서버 오류"));
+  }
 }
 ```
 
+## @ExceptionHandler(ApiException.class) 의미
+
+- Controller / Service / Repository 어디에서든
+
+- ApiException이 throw 되면
+
+- 이 메서드가 자동으로 호출된다
+
+- Controller 메서드는 더 이상 실행되지 않는다
+
+- 여기서 응답을 만들어서 클라이언트로 바로 반환한다
+
+---
+
+### 흐름으로 보면
+```text
+요청
+ ↓
+Controller
+ ↓
+Service
+ ↓
+throw new ApiException(...)
+ ↓
+GlobalExceptionHandler.handleApiException(...)
+ ↓
+ResponseEntity 반환
+ ↓
+클라이언트
+```
 
 ---
 

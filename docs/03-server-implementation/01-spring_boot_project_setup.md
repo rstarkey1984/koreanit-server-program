@@ -470,4 +470,4 @@ http://localhost:8080
 
 ## 다음 단계
 
-→ [**간단한 서버 동작 확인 실습**](02-health_check.md)
+→ [**Spring Container와 Bean**](02-spring_bean.md)

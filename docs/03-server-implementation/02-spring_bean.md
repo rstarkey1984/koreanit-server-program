@@ -169,4 +169,4 @@ Bean을 사용하는 목적은 다음 한 문장으로 정리된다.
 
 ## 다음 단계
 
-→ [**04. Controller 계층 구현**](04-controller_layer.md)
+→ [**간단한 서버 동작 확인 실습 (/health)**](03-health_check.md)
