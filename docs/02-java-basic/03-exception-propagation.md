@@ -282,8 +282,8 @@ catch (Exception e) {
 ## Spring 연결 문장
 
 * `repository` / `service` → 예외 발생 후 throw
-* `controller` → 예외를 잡아 응답으로 변환
-* `Global Exception Handler` → controller 밖에서 일괄 처리
+* `controller` → 성공일때 return 만 함
+* `Global Exception Handler` → 에러를 받아서 일괄 처리
 
 이 구조가 Spring 예외 처리의 그대로인 형태다.
 
