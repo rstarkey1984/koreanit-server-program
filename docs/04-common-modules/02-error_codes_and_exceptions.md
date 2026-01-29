@@ -105,9 +105,9 @@
 
 ---
 
-## 5. 공통 예외 / 에러 코드 정의
+## 5. 에러 코드 / 공통 예외 정의
 
-### ErrorCode (에러 코드 + HTTP 상태 코드 매핑)
+## ErrorCode (에러 코드 + HTTP 상태 코드 매핑)
 
 ```java
 package com.koreanit.spring.error;
@@ -159,9 +159,19 @@ boolean same = (a == b);
 
 > **에러 코드는 값이 아니라 의미를 가진 객체로 관리한다**
 
+## 상태 코드 예시 정리
+
+| ErrorCode            |                HTTP 상태 코드 | 언제 쓰나 (예시)   | 대표 상황 예시                                            |
+| -------------------- | ------------------------: | ------------ | --------------------------------------------------- |
+| `INVALID_REQUEST`    |           400 Bad Request | 요청 형식/값이 잘못됨 | 필수 파라미터 누락, 타입 불일치, 허용 범위 밖 값, JSON 파싱 실패           |
+| `NOT_FOUND_RESOURCE` |             404 Not Found | 대상 리소스가 없음   | `GET /users/999` 조회 결과 없음, `DELETE /posts/10` 대상 없음 |
+| `DUPLICATE_RESOURCE` |              409 Conflict | 유니크/중복 충돌    | 회원가입 시 `username` 중복, 이미 존재하는 값으로 변경 시도             |
+| `INTERNAL_ERROR`     | 500 Internal Server Error | 서버 내부 처리 실패  | 예상하지 못한 예외, 외부 연동 실패, 로직 버그 등(일반적으로 공통 처리)          |
+
+
 ---
 
-### ApiException (에러 코드 + 메시지를 담는 공통 예외)
+## ApiException (에러 코드 + 메시지를 담는 공통 예외)
 
 ```java
 package com.koreanit.spring.error;
