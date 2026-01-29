@@ -265,4 +265,4 @@ ResponseEntity 반환
 
 ## 다음 단계
 
-→ [**요청 로깅 전략 (Filter 기반)**](/docs/03-common-modules/04-request-logging-strategy.md)
+→ [**요청 로깅 전략 (Filter 기반)**](04-request-logging-strategy.md)

@@ -157,4 +157,4 @@ JdbcTemplate을 사용해도
 
 ## 다음 단계
 
-→ [**Repository 계층의 역할과 책임**](10-repository_layer.md)
+→ [**HelloRepository + JdbcTemplate 실습 (users/posts 조회)**](10-repository_layer.md)
