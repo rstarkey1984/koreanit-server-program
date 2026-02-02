@@ -110,16 +110,18 @@
 ## ErrorCode (에러 코드 + HTTP 상태 코드 매핑)
 
 ```java
-package com.koreanit.spring.error;
+package com.koreanit.spring.common.error;
 
 import org.springframework.http.HttpStatus;
 
 public enum ErrorCode {
 
-    INVALID_REQUEST(HttpStatus.BAD_REQUEST),
-    NOT_FOUND_RESOURCE(HttpStatus.NOT_FOUND),
-    DUPLICATE_RESOURCE(HttpStatus.CONFLICT),
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST),   // 400
+    NOT_FOUND_RESOURCE(HttpStatus.NOT_FOUND),  // 404
+    DUPLICATE_RESOURCE(HttpStatus.CONFLICT),   // 409
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED),      // 401 
+    FORBIDDEN(HttpStatus.FORBIDDEN),            // 403 
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR); // 500
 
     private final HttpStatus status;
 
@@ -174,7 +176,7 @@ boolean same = (a == b);
 ## ApiException (에러 코드 + 메시지를 담는 공통 예외)
 
 ```java
-package com.koreanit.spring.error;
+package com.koreanit.spring.common.error;
 
 public class ApiException extends RuntimeException {
 

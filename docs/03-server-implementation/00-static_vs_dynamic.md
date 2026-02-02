@@ -53,7 +53,7 @@ logo.png
 ### 1-4. Spring Boot에서의 위치
 
 ```text
-src/main/resources/static/
+resources/static/
 ```
 
 특징:

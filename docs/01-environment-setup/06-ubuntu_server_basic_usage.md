@@ -156,4 +156,4 @@ tail -f /var/log/syslog
 다음 장에서는
 리눅스 명령어가 **왜 어디서든 실행되는지**를 다룬다.
 
-→ [**07. 리눅스 쉘과 명령어 실행 원리**](07-linux_shell_command.md)
+→ [**리눅스 쉘과 명령어 실행 원리**](07-linux_shell_command.md)

@@ -122,38 +122,49 @@ API 수가 늘어나도 응답 품질이 유지된다.
 예시 코드:
 
 ```java
-package com.koreanit.spring.common;
+package com.koreanit.spring.common.response;
 
 public class ApiResponse<T> {
 
     private final boolean success;
     private final String message;
     private final T data;
+    private final String code;   // 실패 식별자
 
-    private ApiResponse(boolean success, String message, T data) {
+    private ApiResponse(boolean success, String message, T data, String code) {
         this.success = success;
         this.message = message;
         this.data = data;
+        this.code = code;
     }
 
     public boolean isSuccess() { return success; }
     public String getMessage() { return message; }
     public T getData() { return data; }
+    public String getCode() { return code; }
+
+    /* ---------- 성공 ---------- */
 
     public static <T> ApiResponse<T> ok(T data) {
-        return new ApiResponse<>(true, "OK", data);
+        return new ApiResponse<>(true, "OK", data, null);
     }
 
     public static <T> ApiResponse<T> ok(String message, T data) {
-        return new ApiResponse<>(true, message, data);
+        return new ApiResponse<>(true, message, data, null);
     }
 
     public static ApiResponse<Void> ok() {
-        return new ApiResponse<>(true, "OK", null);
+        return new ApiResponse<>(true, "OK", null, null);
     }
 
     public static ApiResponse<Void> ok(String message) {
-        return new ApiResponse<>(true, message, null);
+        return new ApiResponse<>(true, message, null, null);
+    }
+
+    /* ---------- 실패 (아직 의미는 모름) ---------- */
+
+    public static ApiResponse<Void> fail(String code, String message) {
+        return new ApiResponse<>(false, message, null, code);
     }
 }
 ```
@@ -181,45 +192,45 @@ ApiResponse<List<UserDto>>
 기존코드
 ```java
 @GetMapping("/hello/users")
-public List<UserRow> users() {
-  return helloService.users();
+public List<UserResponse> users(@RequestParam(defaultValue = "1000") int limit) {
+    return UserMapper.toResponseList(helloService.users(limit));
 }
 
 @GetMapping("/hello/users/{id}")
-public UserRow user(@PathVariable Long id) {
-  return helloService.user(id);
+public UserResponse user(@PathVariable Long id) {
+    return UserMapper.toResponse(helloService.user(id));
 }
 
 @GetMapping("/hello/posts")
-public List<PostRow> posts() {
-  return helloService.posts();
+public List<PostResponse> posts(@RequestParam(defaultValue = "1000") int limit) {
+    return PostMapper.toResponseList(helloService.posts(limit));
 }
 
 @GetMapping("/hello/posts/{id}")
-public PostRow post(@PathVariable Long id) {
-  return helloService.post(id);
+public PostResponse post(@PathVariable Long id) {
+    return PostMapper.toResponse(helloService.post(id));
 }
 ```
-변경후:
+변경코드
 ```java
 @GetMapping("/hello/users")
-public ApiResponse<List<UserRow>> users() {
-  return ApiResponse.ok(helloService.users());
+public ApiResponse<List<UserResponse>> users(@RequestParam(defaultValue = "1000") int limit) {
+    return ApiResponse.ok(UserMapper.toResponseList(helloService.users(limit)));
 }
 
 @GetMapping("/hello/users/{id}")
-public ApiResponse<UserRow> user(@PathVariable Long id) {
-  return ApiResponse.ok(helloService.user(id));
+public ApiResponse<UserResponse> user(@PathVariable Long id) {
+    return ApiResponse.ok(UserMapper.toResponse(helloService.user(id)));
 }
 
 @GetMapping("/hello/posts")
-public ApiResponse<List<PostRow>> posts() {
-  return ApiResponse.ok(helloService.posts());
+public ApiResponse<List<PostResponse>> posts(@RequestParam(defaultValue = "1000") int limit) {
+    return ApiResponse.ok(PostMapper.toResponseList(helloService.posts(limit)));
 }
 
 @GetMapping("/hello/posts/{id}")
-public ApiResponse<PostRow> post(@PathVariable Long id) {
-  return ApiResponse.ok(helloService.post(id));
+public ApiResponse<PostResponse> post(@PathVariable Long id) {
+    return ApiResponse.ok(PostMapper.toResponse(helloService.post(id)));
 }
 ```
 
@@ -228,11 +239,16 @@ public ApiResponse<PostRow> post(@PathVariable Long id) {
 {
   "success": true,
   "message": "OK",
-  "data": {
-    "id": 12,
-    "username": "user12",
-    "email": "user12@test.com"
-  }
+  "data": [
+    {
+      "id": 10098,
+      "username": "admin",
+      "email": "admin@test.com",
+      "nickname": "관리자(admin)",
+      "createdAt": "2026-02-01T03:32:50"
+    }
+  ],
+  "code": null
 }
 ```
 

@@ -34,7 +34,7 @@ Controller는
 ### 생성 경로
 
 ```text
-src/main/java/com/koreanit/spring/controller
+/java/com/koreanit/spring/controller
 ```
 
 ### 파일 생성
@@ -141,7 +141,6 @@ name=test, count=3
 5. RequestParam 값을 메서드 인자로 변환한다
 6. HealthController.check()를 호출한다
 7. 반환값을 HTTP 응답으로 변환한다
-
 ```
 
 요청이 들어올 때마다

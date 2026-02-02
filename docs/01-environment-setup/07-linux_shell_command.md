@@ -195,4 +195,4 @@ which hello-server
 
 ## 다음 단계
 
-→ [**08. MySQL 설치 및 기본 구성**](08-mysql_install_setup.md)
+→ [**MySQL 설치 및 기본 구성**](08-mysql_install_setup.md)

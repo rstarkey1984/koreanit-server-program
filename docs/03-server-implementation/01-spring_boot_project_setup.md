@@ -418,9 +418,9 @@ http://localhost:8080
 
 3. 기본 화면 파일 위치
 ```text
-src/main/resources/static/index.html
+resources/static/index.html
 ```
-예제파일: [index.html](/koreanit-server/spring/src/main/resources/static/index.html)
+예제파일: [index.html](resources/static/index.html)
 
 
 ---
@@ -428,7 +428,7 @@ src/main/resources/static/index.html
 ## 11. 정적 리소스 동작 원리
 
 ```text
-src/main/resources/static/
+resources/static/
 ```
 
 1. Spring Boot는 위 경로를 정적 리소스로 자동 인식한다

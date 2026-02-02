@@ -74,4 +74,4 @@ GUI 중심 OS 특징:
 
 ## 다음 단계
 
-→ [**03. 리눅스 배포판 소개 ( Ubuntu )**](03-why_ubuntu.md)
+→ [**리눅스 배포판 소개 ( Ubuntu )**](03-why_ubuntu.md)

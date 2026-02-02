@@ -207,4 +207,4 @@ ssh ubuntu24
 
 ## 다음 단계
 
-→ [**06. Ubuntu 서버 맛보기**](06-ubuntu_server_basic_usage.md)
+→ [**Ubuntu 서버 맛보기**](06-ubuntu_server_basic_usage.md)

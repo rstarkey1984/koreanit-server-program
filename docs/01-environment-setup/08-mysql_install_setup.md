@@ -156,4 +156,4 @@ sudo mysql koreanit_service -e "SELECT COUNT(*) FROM comments;"
 
 ## 다음 단계
 
-→ [**09. Nginx 웹 서버 설치 및 동작 확인**](09-nginx_install_check.md)
+→ [**Nginx 웹 서버 설치 및 동작 확인**](09-nginx_install_check.md)

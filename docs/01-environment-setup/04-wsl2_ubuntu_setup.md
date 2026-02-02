@@ -178,6 +178,6 @@ https://learn.microsoft.com/ko-kr/powershell/scripting/install/install-powershel
 
 ## 다음 단계
 
-→ [**05. Ubuntu 서버 기본 세팅**](05-ubuntu_server_setup.md)
+→ [**Ubuntu 서버 기본 세팅**](05-ubuntu_server_setup.md)
 
 

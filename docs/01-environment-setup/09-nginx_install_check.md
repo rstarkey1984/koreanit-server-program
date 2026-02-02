@@ -250,5 +250,5 @@ www/html/index.html
 
 ## 다음 단계
 
-→ [**10. 정적 페이지와 동적 페이지**](10-static_vs_dynamic.md)
+→ [**자바 실행**](/docs/02-java-basic/01-java-execution.md)
 
