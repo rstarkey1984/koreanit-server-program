@@ -597,6 +597,6 @@ GET /hello/posts/99999999
 
 ## 다음 단계
 
-* 다음 단계에서 dto/domain 개념을 알아본다.
+* 다음 단계에서 Entity → Domain → DTO 개념을 알아본다.
 
-→ [**Entity → Domain → DTO 적용**](11-domain_dto.md)
+→ [**Entity → Domain → DTO 계층 분리와 데이터 흐름**](11-domain_dto.md)

@@ -1,4 +1,4 @@
-# Entity → Domain → DTO 적용
+# Entity → Domain → DTO 계층 분리와 데이터 흐름
 
 이 문서는 기존 **HelloRepository + JdbcTemplate 조회 실습**에
 **Domain과 Response DTO를 적용**하여, 계층별 책임과 데이터 흐름을 고정하는 기술 문서다.

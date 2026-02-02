@@ -170,7 +170,7 @@ public class ApiResponse<T> {
 ```
 
 
-### 제네릭 타입
+### 제네릭 타입 파라미터
 
 `ApiResponse<T>`에서 `<T>`는 **응답 data의 타입을 고정하지 않고 상황에 따라 바꾸기 위한 장치**다.
 
