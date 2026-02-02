@@ -571,7 +571,11 @@ public class SecurityConfig {
 @token = 
 
 ### 1) 토큰 없음 (401)
-PUT {{baseUrl}}/api/users/5/nickname?nickname=test
+PUT {{baseUrl}}/api/users/5/nickname
+
+{
+  "nickname": "nickname"
+}
 
 ### 2) 로그인 (토큰 발급)
 POST {{baseUrl}}/api/login
@@ -585,8 +589,12 @@ Content-Type: application/json
 ### 3) 로그인 응답에서 accessToken 값을 복사해서 @token에 넣는다
 
 ### 4) 토큰 포함 요청 (성공)
-PUT {{baseUrl}}/api/users/5/nickname?nickname=test
+PUT {{baseUrl}}/api/users/5/nickname
 Authorization: Bearer {{token}}
+
+{
+  "nickname": "nickname"
+}
 ```
 
 ---

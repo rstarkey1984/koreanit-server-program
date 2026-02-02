@@ -80,6 +80,7 @@ package com.koreanit.spring.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserCreateRequest {
@@ -126,37 +127,7 @@ public class UserCreateRequest {
 
 ---
 
-### 1-2) 비밀번호 변경 요청 DTO
-
-파일: `dto/request/UserPasswordChangeRequest.java`
-
-#### 파일 역할
-
-* 비밀번호 변경 요청에 필요한 입력 값만을 정의한다.
-* 비밀번호에 대한 필수 조건과 길이 제한을 고정한다.
-* 비즈니스 규칙(암호화 등)은 포함하지 않는다.
-
-```java
-package com.koreanit.spring.dto.request;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-
-public class UserPasswordChangeRequest {
-
-    @NotBlank(message = "password는 필수입니다")
-    @Size(min = 4, max = 50, message = "password는 4~50자여야 합니다")
-    @Pattern(regexp = "^[^\\s]+$", message = "password에는 공백을 포함할 수 없습니다")
-    private String password;
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-}
-```
-
----
-
-### 1-3) 로그인 요청 DTO (선택)
+### 1-2) 로그인 요청 DTO
 
 파일: `dto/request/UserLoginRequest.java`
 
@@ -170,6 +141,7 @@ public class UserPasswordChangeRequest {
 package com.koreanit.spring.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserLoginRequest {
@@ -189,6 +161,65 @@ public class UserLoginRequest {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+}
+```
+
+### 1-3) 비밀번호 변경 요청 DTO
+
+파일: `dto/request/UserPasswordChangeRequest.java`
+
+#### 파일 역할
+
+* 비밀번호 변경 요청에 필요한 입력 값만을 정의한다.
+* 비밀번호에 대한 필수 조건과 길이 제한을 고정한다.
+* 비즈니스 규칙(암호화 등)은 포함하지 않는다.
+
+```java
+package com.koreanit.spring.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+public class UserPasswordChangeRequest {
+
+    @NotBlank(message = "password는 필수입니다")
+    @Size(min = 4, max = 50, message = "password는 4~50자여야 합니다")
+    @Pattern(regexp = "^[^\\s]+$", message = "password에는 공백을 포함할 수 없습니다")
+    private String password;
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+```
+
+---
+
+### 1-4) 닉네임 변경 요청 DTO
+
+파일: `dto/request/UserNicknameChangeRequest.java`
+
+#### 파일 역할
+
+* 비밀번호 변경 요청 데이터를 전달한다.
+* 실제 암호화 및 저장은 Service 계층에서 수행된다.
+
+```java
+package com.koreanit.spring.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+public class UserNicknameChangeRequest {
+
+    @NotBlank(message = "nickname은 필수입니다")
+    @Size(min = 2, max = 20, message = "nickname은 2~20자여야 합니다")
+    @Pattern(regexp = "^[^\\s]+$", message = "nickname에는 공백을 포함할 수 없습니다")
+    private String nickname;
+
+    public String getNickname() { return nickname; }
+    public void setNickname(String nickname) { this.nickname = nickname; }
 }
 ```
 

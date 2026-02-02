@@ -115,7 +115,9 @@ public User get(Long id) {
 #### 적용 코드
 
 ```java
-public void changeNickname(Long id, String nickname) {
+public void changeNickname(Long id, UserNicknameChangeRequest req) {
+    String nickname = req.getNickname();
+    
     // 1) 대상 존재 여부 확인 (없으면 여기서 404)
     User user = get(id);
 
@@ -199,7 +201,11 @@ public void delete(Long id) {
 GET {{baseUrl}}/api/users/999999
 
 ### Step2 - 닉네임 변경 대상 없음 (404)
-PUT {{baseUrl}}/api/users/999999/nickname?nickname=test
+PUT {{baseUrl}}/api/users/999999/nickname
+
+{
+  "nickname": "nickname"
+}
 
 ### Step2 - 비밀번호 변경 대상 없음 (404)
 PUT {{baseUrl}}/api/users/999999/password

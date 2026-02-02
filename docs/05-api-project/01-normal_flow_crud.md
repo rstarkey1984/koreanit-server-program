@@ -217,6 +217,26 @@ public class UserPasswordChangeRequest {
 }
 ```
 
+### 4-4. 닉네임 변경 요청 DTO
+
+파일: `dto/request/UserNicknameChangeRequest.java`
+
+#### 파일 역할
+
+* 비밀번호 변경 요청 데이터를 전달한다.
+* 실제 암호화 및 저장은 Service 계층에서 수행된다.
+
+```java
+package com.koreanit.spring.dto.request;
+
+public class UserNicknameChangeRequest {
+    private String nickname;
+
+    public String getNickname() { return nickname; }
+    public void setNickname(String nickname) { this.nickname = nickname; }
+}
+```
+
 ---
 
 ## 5. Repository 계층 (Entity 반환 고정)
@@ -463,7 +483,8 @@ public class UserService {
     return UserMapper.toDomainList(userRepository.findAll(safeLimit));
   }
 
-  public void changeNickname(Long id, String nickname) {
+  public void changeNickname(Long id, UserNicknameChangeRequest req) {
+    String nickname = req.getNickname();
     userRepository.updateNickname(id, nickname);
   }
 
@@ -541,8 +562,8 @@ public class UserController {
     }
 
     @PutMapping("/{id}/nickname")
-    public ApiResponse<Void> changeNickname(@PathVariable Long id, @RequestParam String nickname) {
-        userService.changeNickname(id, nickname);
+    public ApiResponse<Void> changeNickname(@PathVariable Long id, @RequestBody UserNicknameChangeRequest req) {
+        userService.changeNickname(id, req);
         return ApiResponse.ok();
     }
 
@@ -596,10 +617,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ApiResponse<Void> login(@RequestBody UserLoginRequest req, HttpSession session) {
-        Long userId = userService.login(req.getUsername(), req.getPassword());
-        session.setAttribute(SESSION_USER_ID, userId);
-        return ApiResponse.ok();
+    public ApiResponse<Long> login(@RequestBody UserLoginRequest req, HttpSession session) {
+      Long userId = userService.login(req.getUsername(), req.getPassword());
+      session.setAttribute(SESSION_USER_ID, userId);
+      return ApiResponse.ok(userId);
     }
 
     @PostMapping("/logout")
@@ -661,7 +682,11 @@ GET {{baseUrl}}/api/users/1
 # 설명: id=1 사용자를 조회한다(실제 id로 바꿔 호출).
 
 ### 6) 닉네임 변경
-PUT {{baseUrl}}/api/users/1/nickname?nickname=닉네임변경
+PUT {{baseUrl}}/api/users/1/nickname
+
+{
+  "nickname": "nickname"
+}
 # 설명: id=1 사용자의 nickname을 변경한다.
 
 ### 7) 비밀번호 변경
