@@ -553,7 +553,28 @@ public void changePassword(Long id, UserPasswordChangeRequest req)
 
 ---
 
-## 10. 테스트
+## 10. AuthorizationDeniedException 예외처리
+
+`@PreAuthorize` 단계에서 난 오류는 `GlobalExceptionHandler.java` 에서 잡는다.
+
+```java
+@ExceptionHandler({ AuthorizationDeniedException.class, AccessDeniedException.class })
+public ResponseEntity<ApiResponse<Void>> handleForbidden(Exception e) {
+
+  log.warn("[FORBIDDEN] message=\"{}\" origin={}",
+      "권한이 없습니다", origin(e));
+
+  return ResponseEntity
+      .status(ErrorCode.FORBIDDEN.getStatus())
+      .body(ApiResponse.fail(
+          ErrorCode.FORBIDDEN.name(),
+          "권한이 없습니다"));
+}
+```
+
+---
+
+## 11. 테스트
 
 파일: `403.http`
 
@@ -561,25 +582,16 @@ public void changePassword(Long id, UserPasswordChangeRequest req)
 @baseUrl = http://localhost:8080
 @json = application/json
 
-### 1) 로그인 없이 관리자 API 호출 -> 401
-GET {{baseUrl}}/api/users?limit=1
-
-### 2) 일반 사용자 로그인
+### 1) 일반 사용자 로그인
 POST {{baseUrl}}/api/login
 Content-Type: {{json}}
 
 {
-  "username": "user1",
+  "username": "test",
   "password": "1234"
 }
 
-### 3) 일반 사용자로 목록 조회 -> 403
-GET {{baseUrl}}/api/users?limit=1
-
-### 4) 관리자 권한 부여 (DB에서 수행)
-# INSERT INTO user_roles(user_id, role) VALUES (<admin_id>, 'ROLE_ADMIN');
-
-### 5) 관리자 계정으로 로그인
+### 2) 관리자 계정으로 로그인
 POST {{baseUrl}}/api/login
 Content-Type: {{json}}
 
@@ -588,19 +600,19 @@ Content-Type: {{json}}
   "password": "1234"
 }
 
-### 6) 관리자 목록 조회 -> 200
-GET {{baseUrl}}/api/users?limit=5
+### 3) 사용자 목록 조회
+GET {{baseUrl}}/api/users?limit=1
 
-### 7) 본인 비밀번호 변경 -> 200
-PUT {{baseUrl}}/api/users/10060/password
+### 4) 비밀번호 변경
+PUT {{baseUrl}}/api/users/1/password
 Content-Type: {{json}}
 
 {
-  "password": "newpassword"
+  "password": "1234"
 }
 
-### 8) 다른 사용자 비밀번호 변경 (일반 사용자면 403, 관리자면 200)
-PUT {{baseUrl}}/api/users/99999/password
+### 5) 닉네임 변경
+PUT {{baseUrl}}/api/users/11/nickname
 Content-Type: {{json}}
 
 {
@@ -610,7 +622,7 @@ Content-Type: {{json}}
 
 ---
 
-## 11. 체크리스트
+## 체크리스트
 
 * `user_roles` 테이블 생성 완료
 * 신규 가입 시 `ROLE_USER` 부여(권장)
@@ -622,7 +634,7 @@ Content-Type: {{json}}
 
 ---
 
-## 12. 이 단계의 핵심 정리
+## 이 단계의 핵심 정리
 
 * Role은 DB에서 관리한다
 * Filter가 authorities를 주입하면, 이후 인가는 선언적으로 처리할 수 있다
