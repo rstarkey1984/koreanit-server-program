@@ -156,9 +156,6 @@ Global Exception Handler가 책임지는 예외는 다음과 같다.
 | Validation 실패 | MethodArgumentNotValidException | Spring |
 | 처리되지 않은 예외    | Exception                       | 시스템    |
 
-> 이 장에서 말하는 **Validation 포함**이란,
-> Spring이 자동으로 발생시키는 검증 예외까지
-> 모두 동일한 실패 응답 구조로 통일한다는 의미다.
 
 ---
 
@@ -197,7 +194,6 @@ public class GlobalExceptionHandler {
       }
     }
 
-    // fallback: 첫 프레임
     StackTraceElement top = trace[0];
     return top.getClassName() + ":" + top.getLineNumber();
   }
@@ -214,7 +210,6 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.fail(code.name(), e.getMessage()));
   }
 
-  // 핵심: 중복 제약 위반은 409로 매핑하고 warn 1줄만 찍는다
   @ExceptionHandler(DuplicateKeyException.class)
   public ResponseEntity<ApiResponse<Void>> handleDuplicateKey(DuplicateKeyException e) {
     log.warn("[DUPLICATE_KEY] message=\"{}\" origin={}",
@@ -266,6 +261,142 @@ public class GlobalExceptionHandler {
   }
 }
 ```
+
+---
+
+## 8. @RestControllerAdvice 구현의 의미
+
+이 구현의 핵심은 **예외의 발생 위치(Controller/Service/Repository)와 상관없이**
+응답 변환은 항상 여기서 일어나도록 하는 것이다.
+
+### 8-1. `@RestControllerAdvice`가 커버하는 범위
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler { ... }
+```
+
+`@RestControllerAdvice`는 다음 의미를 가진다.
+
+* **전역 적용 범위**: 기본적으로 *DispatcherServlet이 처리하는 모든 Controller 요청*에 대해 적용된다.
+
+  * `@RestController`, `@Controller`, `@Service`, `@Repository` 모두 포함된다.
+  * 즉, DispatcherServlet 아래에서 던져진 예외는 모두 커버한다.
+
+* **처리 가능한 예외의 출처**
+
+  * Controller 메서드 내부에서 `throw`된 예외
+  * `@RequestBody` 변환/파싱 단계에서 발생한 예외
+  * `@Valid` 검증 단계에서 발생한 예외
+  * Controller에서 호출한 Service/Repository에서 위로 전파된 예외
+
+* **커버하지 않는 영역(주의)**
+
+  * DispatcherServlet까지 오지 않는 요청 흐름(예: 별도 서블릿, 별도 필터 체인에서 응답을 이미 작성한 경우)
+  * Spring Security의 일부 예외처럼, Security Filter 단계에서 이미 처리(EntryPoint/AccessDeniedHandler)되어
+    MVC 예외 처리까지 도달하지 않는 케이스
+
+정리하면,
+
+> `@RestControllerAdvice`는 **MVC(DispatcherServlet) 요청 처리 파이프라인 전체**에서
+> 최종적으로 발생/전파된 예외를 받아 **JSON 응답 규칙으로 변환**하는 전역 핸들러다.
+
+---
+
+### 8-2. `@ExceptionHandler`의 의미
+
+```java
+@ExceptionHandler(DuplicateKeyException.class)
+```
+
+이 선언의 의미는 다음과 같다.
+
+> Controller 처리 중 `DuplicateKeyException`이 발생하면
+> 이 메서드가 해당 예외를 대신 처리한다.
+
+Spring은 내부적으로 다음 흐름으로 동작한다.
+
+```text
+Controller 실행 중 예외 발생
+  ↓
+일치하는 @ExceptionHandler 탐색
+  ↓
+해당 메서드 호출
+  ↓
+반환값을 HTTP 응답으로 변환
+```
+
+따라서 각 `@ExceptionHandler` 메서드는
+**특정 예외 타입 → HTTP 응답 규칙**을 매핑하는 역할을 한다.
+
+---
+
+### 8-3. 비즈니스 예외 (`ApiException`) 처리
+
+```java
+@ExceptionHandler(ApiException.class)
+public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e)
+```
+
+이 메서드는 **개발자가 의도적으로 던진 예외**를 처리한다.
+
+특징:
+
+* `ErrorCode`를 통해 HTTP 상태 코드를 결정한다
+* 에러 코드를 기준으로 warn 로그를 1줄 남긴다
+* 실패 응답은 항상 `ApiResponse.fail()`로 통일한다
+
+즉,
+
+> 비즈니스 규칙 위반은
+> **예외를 던지고 → 전역에서 응답으로 변환**한다
+
+라는 설계 원칙을 구현한 부분이다.
+
+---
+
+### 8-4. Spring 프레임워크 예외 처리
+
+다음 예외들은 모두 **Controller 이전 단계**에서 발생할 수 있다.
+
+* `HttpMessageNotReadableException`
+
+  * 요청 바디 없음 / JSON 형식 오류 / 타입 불일치
+
+* `MethodArgumentNotValidException`
+
+  * `@Valid` 검증 실패
+
+이 예외들의 공통점은:
+
+* Service 비즈니스 로직과 무관한 “입력/제약” 문제인 경우가 많다
+* Controller에서 try-catch로 일일이 처리하면 코드가 복잡해진다
+
+따라서 이 예외들도 Global Exception Handler에서 **명시적으로 매핑**해
+응답 구조를 통일한다.
+
+---
+
+### 8-5. 처리되지 않은 예외 (`Exception`)는 최후의 안전망
+
+```java
+@ExceptionHandler(Exception.class)
+```
+
+이 핸들러는 **예상하지 못한 예외**에 대한 마지막 방어선이다.
+
+* 누락된 매핑
+* 로직 버그
+* 외부 연동 실패
+
+이 경우에는:
+
+* HTTP 500 응답
+* 스택 트레이스를 포함한 error 로그 출력
+* 클라이언트에는 내부 정보 노출 없이 일반 메시지만 반환
+
+> 이 핸들러가 호출된다면
+> **버그이거나 설계 누락**으로 판단해야 한다.
 
 ---
 

@@ -161,7 +161,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, null, null);
     }
 
-    /* ---------- 실패 (아직 의미는 모름) ---------- */
+    /* ---------- 실패 ---------- */
 
     public static ApiResponse<Void> fail(String code, String message) {
         return new ApiResponse<>(false, message, null, code);

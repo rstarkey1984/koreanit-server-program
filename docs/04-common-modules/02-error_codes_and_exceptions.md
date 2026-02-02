@@ -139,12 +139,10 @@ public enum ErrorCode {
 
 ## enum 상수는 값이 아니라 객체다
 
-`ErrorCode.INVALID_REQUEST` 처럼 보이는 enum 상수는
-단순한 문자열이나 숫자가 아니라 **이미 생성된 객체 인스턴스**다.
+`ErrorCode.INVALID_REQUEST` 처럼 보이는 enum 상수는 코드에서는 이름으로 표현되지만, 실행 시점에는 JVM이 생성한 단일 객체 인스턴스를 참조한다.
 
-* enum 상수는 객체다
 * 애플리케이션 시작 시 한 번만 생성된다
-* 각 상수는 JVM 전체에서 하나만 존재한다
+* 각 상수 객체는 JVM 전체에서 하나만 존재한다
 
 ### 왜 `==` 비교가 가능한가
 
