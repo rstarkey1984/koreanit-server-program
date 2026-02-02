@@ -912,6 +912,4 @@ public static UserResponse from(User u) {
 
 ## 다음 단계
 
-다음 단계에서 ApiResponse 를 도입해 예외/응답을 규격화한다.
-
-→ [**공통 응답 포맷**](/docs/04-common-modules/01-common_response_format.md)
+→ [**Spring Boot 애플리케이션 전체 흐름**](12-springboot_flow.md)

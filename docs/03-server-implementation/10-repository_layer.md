@@ -599,4 +599,4 @@ GET /hello/posts/99999999
 
 * 다음 단계에서 dto/domain 개념을 알아본다.
 
-→ [**Entity → Domain → DTO 적용**](11-domain-dto.md)
+→ [**Entity → Domain → DTO 적용**](11-domain_dto.md)
