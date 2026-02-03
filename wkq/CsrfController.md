@@ -57,8 +57,8 @@ public class CsrfController {
      * 3. CSRF Token 정보
      * ===================== */
     result.put("csrfToken", Map.of(
-        "headerName", token.getHeaderName(),
-        "token", token.getToken()
+        "headerName", token != null ? token.getHeaderName() : null,
+        "token", token != null ? token.getToken() : null
     ));
 
     return result;

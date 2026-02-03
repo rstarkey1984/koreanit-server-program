@@ -572,6 +572,7 @@ public class SecurityConfig {
 
 ### 1) 토큰 없음 (401)
 PUT {{baseUrl}}/api/users/5/nickname
+Content-Type: {{json}}
 
 {
   "nickname": "nickname"
@@ -590,6 +591,7 @@ Content-Type: application/json
 
 ### 4) 토큰 포함 요청 (성공)
 PUT {{baseUrl}}/api/users/5/nickname
+Content-Type: {{json}}
 Authorization: Bearer {{token}}
 
 {

@@ -110,7 +110,7 @@ public class SecurityConfig {
 
 ---
 
-## 7. 이 단계가 끝났을 때 보장되는 상태
+## 이 단계가 끝났을 때 보장되는 상태
 
 * 모든 API 정상 동작
 * 401 / 403 발생 없음
@@ -126,23 +126,6 @@ public class SecurityConfig {
 
 ---
 
-## 8. 현재 단계의 책임 범위
-
-### 이 단계에서 확정되는 것
-
-* Security 의존성 채택
-* SecurityConfig 위치와 역할
-* 보안 책임을 Security로 위임하는 구조적 합의
-
-### 이 단계에서 하지 않는 것
-
-* 인증 처리
-* 인가 처리
-* 차단 정책
-* 로그인 구현
-
----
-
 ## 다음 단계
 
-→ [**프로젝트에 공통으로 적용되는 구조와 흐름**](/docs/05-api-project/00-intro.md)
+→ [**Users & Posts API — 전체 구조**](/docs/05-api-project/00-intro.md)

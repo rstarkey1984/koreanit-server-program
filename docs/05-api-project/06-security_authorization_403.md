@@ -170,9 +170,9 @@ public class JdbcUserRoleRepository implements UserRoleRepository {
 ```java
 // 정상 흐름: 회원가입 → PK 반환
 public Long create(UserCreateRequest req) {
-  String username = req.getUsername();
-  String nickname = req.getNickname();
-  String email = req.getEmail();
+  String username = req.getUsername().trim().toLowerCase();
+  String nickname = req.getNickname().trim().toLowerCase();
+  String email = req.getEmail().trim().toLowerCase();
   String hash = passwordEncoder.encode(req.getPassword());
 
   try {
@@ -332,7 +332,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.koreanit.spring.common.error.ErrorCode;
 import com.koreanit.spring.common.response.ApiResponse;
 import com.koreanit.spring.repository.UserRepository;
-import com.koreanit.spring.repository.UserRoleRepository; // (추가) 권한/롤 조회가 필요하면 유지
+import com.koreanit.spring.repository.UserRoleRepository;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -361,13 +361,6 @@ public class SecurityConfig {
     }
   }
 
-  /**
-   * (추가/복구) 기존 코드에서 SessionAuthenticationFilter가 UserRoleRepository까지 받았음.
-   * - 네가 만든 SessionAuthenticationFilter 생성자가 (UserRepository, UserRoleRepository)
-   * 형태면 이 Bean 시그니처가 필요
-   * - 생성자가 (UserRepository) 1개만 받는 형태라면 아래 userRoleRepository 파라미터와 import를 제거하면
-   * 됨
-   */
   @Bean
   public SessionAuthenticationFilter sessionAuthenticationFilter(
       UserRepository userRepository,
@@ -391,7 +384,7 @@ public class SecurityConfig {
 
         /**
          * 실습 단순화를 위해 CSRF 비활성
-         * - 운영에서는 보통 활성 + 토큰 전달 방식(CookieCsrfTokenRepository 등) 사용
+         * - 운영에서는 보통 활성
          */
         .csrf(csrf -> csrf.disable())
 
@@ -448,11 +441,11 @@ public class SecurityConfig {
 }
 ```
 
-설명:
-
 * `hasRole("ADMIN")`은 내부적으로 `ROLE_ADMIN` authority 존재 여부를 검사한다
+
 * 목록/단건 조회만 URL 레벨에서 관리자 전용으로 고정한다
-* 변경 API는 URL에서 세분화하지 않고, Method Security에서 "본인 또는 관리자"로 제어한다
+
+* 패스워드 변경 및 닉네임 변경은 API는 URL에서 세분화하지 않고, Method Security에서 "본인 또는 관리자"로 제어할 예정
 
 ---
 
@@ -496,6 +489,8 @@ Spring Security에서는
 
 ### 9-2. 현재 로그인 사용자 id 조회 유틸
 
+> @PreAuthorize 에서 사용할 정적메서드를 작성한다
+
 principal은 05 단계에서 `LoginUser`로 고정되어 있다.
 
 파일: `security/SecurityUtils.java`
@@ -523,7 +518,9 @@ public class SecurityUtils {
 }
 ```
 
-### 9-3. Service 메서드에 @PreAuthorize 적용
+---
+
+## 10. Service 메서드에 @PreAuthorize 적용
 
 적용 규칙:
 
@@ -549,11 +546,232 @@ public void changeNickname(Long id, UserNicknameChangeRequest req)
 // 정상 흐름: 비밀번호 변경 (해시 저장)
 @PreAuthorize("hasRole('ADMIN') or #id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()")
 public void changePassword(Long id, UserPasswordChangeRequest req) 
+
+@PreAuthorize("hasRole('ADMIN') or #id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()")
+public void delete(Long id) {
 ```
+
+## @PreAuthorize 개념과 사용 규칙
+
+이 문서는 **Service 메서드 단위 인가 처리**를 위해 사용하는
+`@PreAuthorize`의 개념, 동작 위치, 표현식 작성 방법, 사용 규칙을 정리한 기술 문서다.
 
 ---
 
-## 10. AuthorizationDeniedException 예외처리
+## 10-0. 선행 조건 (@EnableMethodSecurity)
+
+`@PreAuthorize`를 사용하려면 **메서드 보안 기능을 반드시 활성화**해야 한다.
+
+```java
+@Configuration
+@EnableMethodSecurity
+public class MethodSecurityConfig {
+}
+```
+
+* `@EnableMethodSecurity`가 있어야 `@PreAuthorize`, `@PostAuthorize`가 동작한다
+* 이 설정이 없으면 애너테이션을 붙여도 **아무 효과가 없다**
+* 보통 `security` 패키지에 전용 설정 클래스로 둔다
+
+---
+
+## 10-1. @PreAuthorize란 무엇인가
+
+`@PreAuthorize`는 **메서드가 실행되기 전에 인가(Authorization) 조건을 검사**하는
+Spring Security의 **메서드 보안 애너테이션**이다.
+
+* “이 메서드를 누가 실행할 수 있는가”를 선언적으로 표현한다
+* 조건을 만족하지 못하면 **메서드 본문은 실행되지 않는다**
+* Controller가 아니라 **Service 계층에서 인가 규칙을 고정**하는 것이 핵심이다
+
+즉,
+
+> 요청을 허용할지 말지를
+> **비즈니스 로직에 들어가기 전에** 결정하는 장치다.
+
+---
+
+## 10-2. 언제 동작하는가 (실행 시점)
+
+요청 흐름 기준:
+
+```
+Client
+ → Filter
+ → Spring Security Filter Chain
+ → DispatcherServlet
+ → Controller
+ → Service 메서드 호출 시점
+    ↳ @PreAuthorize 검사
+        - true  → 메서드 실행
+        - false → 예외 발생
+```
+
+* Controller는 이미 호출된 상태일 수 있다
+* **Service 메서드 진입 직전에** 인가가 차단된다
+
+---
+
+## 10-3. 내부 동작 개념
+
+`@PreAuthorize`는 내부적으로 다음을 수행한다.
+
+1. `SecurityContextHolder`에서 `Authentication` 조회
+2. SpEL(Spring Expression Language) 표현식 평가
+3. 결과가 `false`이면
+
+   * `AccessDeniedException` 또는 `AuthorizationDeniedException` 발생
+4. 결과가 `true`이면
+
+   * 실제 메서드 실행
+
+---
+
+## 10-4. SpEL 표현식 사용법
+
+`@PreAuthorize`의 조건은 **문자열 형태의 SpEL**로 작성한다.
+
+### 1. 권한(Role) 검사
+
+```java
+@PreAuthorize("hasRole('ADMIN')")
+```
+
+* `ROLE_ADMIN` 권한을 가진 사용자만 허용
+* 내부적으로 `GrantedAuthority`를 검사한다
+
+---
+
+### 2. 메서드 파라미터 참조
+
+```java
+@PreAuthorize("#id == 10")
+```
+
+* `#파라미터명` 형태로 메서드 인자 참조 가능
+* 실제 호출 시 전달된 값으로 비교된다
+
+---
+
+### 3. 인증 객체 기반 조건
+
+```java
+@PreAuthorize("isAuthenticated()")
+@PreAuthorize("isAnonymous()")
+```
+
+* 현재 인증 상태 기준 조건
+
+---
+
+### 4. 정적 메서드 호출
+
+```java
+@PreAuthorize(
+  "#id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()"
+)
+```
+
+* `T(패키지.클래스)` 형태로 정적 메서드 호출
+* SecurityContext 접근 로직을 표현식 밖으로 분리하는 핵심 패턴
+
+---
+
+### 5. 논리 연산
+
+```java
+@PreAuthorize("hasRole('ADMIN') or #id == ...")
+@PreAuthorize("hasRole('ADMIN') and isAuthenticated()")
+```
+
+* `and`, `or`, `not` 사용 가능
+
+---
+
+## 10-5. 실패 시 흐름
+
+조건이 `false`일 경우:
+
+* 메서드 본문 실행 ❌
+* 즉시 보안 예외 발생
+
+  * `AccessDeniedException`
+  * 또는 `AuthorizationDeniedException`
+  
+
+즉,
+
+> `@PreAuthorize` 실패는
+> **비즈니스 예외가 아니라 보안 예외**다.
+
+---
+
+## 10-6. @PreAuthorize 사용 규칙
+
+### 1. Controller에 두지 않는다
+
+* Controller는 요청/응답 변환 책임
+* 인가 규칙은 Service에서 고정한다
+
+---
+
+### 2. “누가 실행 가능한가”만 표현한다
+
+`@PreAuthorize`는 다음만 책임진다.
+
+* 관리자 여부
+* 본인 여부
+* 인증 여부
+
+비즈니스 조건은 Service 로직에서 처리한다.
+
+---
+
+### 3. 표현식은 단순하게 유지한다
+
+좋은 예:
+
+```java
+@PreAuthorize("hasRole('ADMIN') or #id == SecurityUtils.currentUserId()")
+```
+
+복잡한 로직은 Java 코드로 분리한다.
+
+---
+
+### 4. 공통 로직은 유틸 클래스로 분리한다
+
+* `SecurityUtils.currentUserId()`
+* `SecurityUtils.hasRole(...)`
+
+SpEL은 **조립만 담당**한다.
+
+---
+
+### 5. 기준 패턴: 관리자 OR 본인
+
+```java
+hasRole('ADMIN') or #id == currentUserId()
+```
+
+* 조회
+* 수정
+* 삭제
+
+모든 사용자 자원 접근의 기본 규칙으로 사용한다.
+
+---
+
+## 10-7. 한 줄 요약
+
+`@PreAuthorize`는
+**Service 메서드 실행 전에 인가 규칙을 선언적으로 고정하기 위한
+Spring Security 메서드 보안 장치**다.
+
+
+---
+
+## 11. AuthorizationDeniedException 예외처리
 
 `@PreAuthorize` 단계에서 난 오류는 `GlobalExceptionHandler.java` 에서 잡는다.
 
@@ -574,7 +792,7 @@ public ResponseEntity<ApiResponse<Void>> handleForbidden(Exception e) {
 
 ---
 
-## 11. 테스트
+## 12. 테스트
 
 파일: `403.http`
 

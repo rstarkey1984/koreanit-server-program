@@ -101,9 +101,9 @@ private String toDuplicateMessage(DuplicateKeyException e) {
 ```java
 // 정상 흐름: 회원가입 → PK 반환
 public Long create(UserCreateRequest req) {
-  String username = req.getUsername();
-  String nickname = req.getNickname();
-  String email = req.getEmail();
+  String username = req.getUsername().trim().toLowerCase();
+  String nickname = req.getNickname().trim().toLowerCase();
+  String email = req.getEmail().trim().toLowerCase();
   String hash = passwordEncoder.encode(req.getPassword());
 
   try {

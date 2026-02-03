@@ -1,4 +1,4 @@
-# 02. 입력 검증 (400) — DTO(@Valid) + Service(정규화)
+# 입력 검증 (400) — DTO(@Valid) + Service(정규화)
 
 이 문서는 Users CRUD API에서 **입력 검증 책임을 계층별로 분리**하여 적용하는 기준을 정의한다.
 입력 검증은 두 단계로 나뉘며, 각 단계는 명확히 다른 책임을 가진다.
@@ -275,12 +275,19 @@ Service는 다음을 전제로 동작한다.
 
 ```java
 public Long create(UserCreateRequest req) {
-    String username = req.getUsername();
-    String nickname = req.getNickname();
-    String email = req.getEmail();
+    String username = req.getUsername().trim().toLowerCase();
+    String nickname = req.getNickname().trim().toLowerCase();
+    String email = req.getEmail().trim().toLowerCase();
     String hash = passwordEncoder.encode(req.getPassword());
 
     return userRepository.save(username, hash, nickname, email);
+}
+```
+
+```java
+public void changeNickname(Long id, UserNicknameChangeRequest req){
+  String nickname = req.getNickname().trim().toLowerCase();  
+  ...
 }
 ```
 
@@ -321,19 +328,6 @@ Content-Type: application/json
   "email": "test@test.com"
 }
 
-
-### email 형식 오류 (400)
-POST {{baseUrl}}/api/users
-Content-Type: application/json
-
-{
-  "username": "test100",
-  "password": "1234",
-  "nickname": "테스트",
-  "email": "not-an-email"
-}
-
-
 ### password 너무 짧음 (400)
 PUT {{baseUrl}}/api/users/10060/password
 Content-Type: application/json
@@ -352,6 +346,122 @@ Content-Type: application/json
   `GlobalExceptionHandler` 가 **400 + INVALID_REQUEST** 로 통일한다
 * Service는 요청 값 판단을 수행하지 않고,
   **정규화 및 정상 흐름 로직만 담당한다
+
+---
+
+
+# 실습 — 이메일 변경 API (입력 검증 400)
+
+이 실습은 **입력 검증 책임 분리(400)** 기준을 이메일 변경 API에 적용하는 것이다.
+본 실습에서는 **요청 값 오류(400)** 까지만 다루며,
+대상 없음(404), 중복(409), 인증/인가(401/403)는 처리하지 않는다.
+
+---
+
+## 실습 목표
+
+* Request DTO + `@Valid`로 **요청 값 판단 규칙을 고정**한다
+* Service는 **정규화(trim / lowercase)** 와 정상 흐름만 담당한다
+* 요청 값 판단 실패는 **GlobalExceptionHandler에서 400으로 통일**된다
+
+---
+
+## 1. Request DTO 수정
+
+파일: `dto/request/UserEmailChangeRequest.java`
+
+### 역할
+
+* 이메일 변경 요청 값을 전달한다
+* 이메일 **형식만 판단**한다
+* 빈 문자열과 미입력을 동일하게 `null`로 정규화한다
+
+```java
+package com.koreanit.spring.dto.request;
+
+import jakarta.validation.constraints.Email;
+
+public class UserEmailChangeRequest {
+
+    @Email(message = "email 형식이 올바르지 않습니다")
+    private String email;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        if (email == null) {
+            this.email = null;
+            return;
+        }
+        String v = email.trim();
+        this.email = v.isEmpty() ? null : v;
+    }
+}
+```
+
+---
+
+## 2. Controller 엔드포인트에 @Valid 추가
+
+파일: `controller/UserController.java`
+
+### 역할
+
+* `@Valid`로 요청 값 판단을 Spring에 위임한다
+
+```java
+@PutMapping("/{id}/email")
+public ApiResponse<Void> changeEmail(
+        @PathVariable Long id,
+        @Valid @RequestBody UserEmailChangeRequest req
+) {
+    userService.changeEmail(id, req);
+    return ApiResponse.ok();
+}
+```
+
+---
+
+## 3. Service 메서드 수정
+
+파일: `service/UserService.java`
+
+### 역할
+
+* 이메일을 정규화하여 저장 흐름을 호출한다
+
+```java
+public void changeEmail(Long id, UserEmailChangeRequest req) {
+    String email = req.getEmail();
+    String normalized = (email == null) ? null : email.toLowerCase();
+
+    userRepository.updateEmail(id, normalized);
+}
+```
+
+
+## 4. API 테스트 추가 (VSCode REST Client)
+`400.http`
+```
+### email 형식 오류 (400)
+PUT {{baseUrl}}/api/users/1/email
+Content-Type: application/json
+
+{
+  "email": "not-an-email"
+}
+```
+
+---
+
+## 실습 체크리스트
+
+* 이메일 형식 오류 시 400 응답이 내려오는가
+* 빈 문자열 입력이 400이 아닌 정상 처리되는가
+* Controller에서 검증 실패를 직접 처리하지 않는가
+* Service에서 요청 값 판단 로직을 넣지 않았는가
 
 ---
 

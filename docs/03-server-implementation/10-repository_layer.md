@@ -475,7 +475,7 @@ private static final int MAX_LIMIT = 1000;
 ```java
 private int normalizeLimit(int limit) {
     if (limit <= 0) {
-        throw new IllegalArgumentException("limit must be >= 1");
+        throw new IllegalArgumentException("limit 은 1 이상 입력해주세요");
     }
     if (limit > MAX_LIMIT) {
         return MAX_LIMIT;

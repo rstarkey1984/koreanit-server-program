@@ -248,6 +248,7 @@ public class Post {
       LocalDateTime updatedAt) {
     if (id == null)
       throw new IllegalArgumentException("id는 필수입니다");
+    
     return new Post(id, userId, title, content, viewCount, commentsCnt, createdAt, updatedAt);
   }
 
@@ -552,7 +553,7 @@ public class HelloService {
 
   private int normalizeLimit(int limit) {
     if (limit <= 0) {
-      throw new IllegalArgumentException("limit must be >= 1");
+      throw new IllegalArgumentException("limit 은 1 이상 입력해주세요");
     }
     if (limit > MAX_LIMIT) {
       return MAX_LIMIT;
@@ -912,4 +913,4 @@ public static UserResponse from(User u) {
 
 ## 다음 단계
 
-→ [**Spring Boot 애플리케이션 전체 흐름**](12-springboot_flow.md)
+→ [**프로젝트에 공통으로 적용되는 구조와 흐름**](12-project_structure_flow.md)

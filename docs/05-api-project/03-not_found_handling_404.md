@@ -202,6 +202,7 @@ GET {{baseUrl}}/api/users/999999
 
 ### Step2 - 닉네임 변경 대상 없음 (404)
 PUT {{baseUrl}}/api/users/999999/nickname
+Content-Type: {{json}}
 
 {
   "nickname": "nickname"

@@ -1,4 +1,4 @@
-# 01. Users 정상 흐름 CRUD + 세션 로그인
+# Users 정상 흐름 CRUD + 세션 로그인
 
 이 문서는 **Users 도메인의 정상 흐름 CRUD와 세션 기반 로그인을 하나의 기준 흐름으로 완성**한다.
 
@@ -458,7 +458,7 @@ public class UserService {
 
   private int normalizeLimit(int limit) {
     if (limit <= 0) {
-      throw new IllegalArgumentException("limit must be >= 1");
+      throw new IllegalArgumentException("limit 은 1 이상 입력해주세요");
     }
     return Math.min(limit, MAX_LIMIT);
   }
@@ -652,10 +652,10 @@ POST {{baseUrl}}/api/users
 Content-Type: {{json}}
 
 {
-  "username": "testuser",
+  "username": "admin",
   "password": "1234",
-  "nickname": "테스트유저",
-  "email": "testuser@test.com"
+  "nickname": "관리자",
+  "email": "admin@admin.com"
 }
 # 설명: 신규 유저를 생성하고 응답으로 userId를 받는다.
 
@@ -664,25 +664,22 @@ POST {{baseUrl}}/api/login
 Content-Type: {{json}}
 
 {
-  "username": "testuser",
+  "username": "admin",
   "password": "1234"
 }
-# 설명: 로그인 성공 시 JSESSIONID 쿠키가 발급되고 이후 요청에 자동 포함된다.
 
 ### 3) 내 정보 조회(/api/me)
 GET {{baseUrl}}/api/me
-# 설명: 세션에 저장된 LOGIN_USER_ID로 현재 로그인 사용자 정보를 조회한다.
 
 ### 4) 사용자 목록(limit)
 GET {{baseUrl}}/api/users?limit=10
-# 설명: 최신 사용자부터 최대 limit개를 조회한다.
 
 ### 5) 사용자 단건 조회
 GET {{baseUrl}}/api/users/1
-# 설명: id=1 사용자를 조회한다(실제 id로 바꿔 호출).
 
 ### 6) 닉네임 변경
 PUT {{baseUrl}}/api/users/1/nickname
+Content-Type: {{json}}
 
 {
   "nickname": "nickname"
@@ -700,8 +697,160 @@ Content-Type: {{json}}
 
 ### 8) 로그아웃(세션 삭제)
 POST {{baseUrl}}/api/logout
-# 설명: 세션을 무효화하여 이후 /api/me 호출이 실패하도록 만든다.
+
+### 9) 사용자삭제
+DELETE {{baseUrl}}/api/users/1
 ```
+
+---
+
+
+# 실습 — 이메일 변경 API 추가
+
+## 실습 목표
+
+이 실습의 목표는 다음과 같다.
+
+* 기존 Users CRUD 흐름을 **확장하는 방식**을 익힌다.
+* 새로운 기능 추가 시 **DTO → Controller → Service → Repository** 흐름이 어떻게 이어지는지 확인한다.
+* 실패 처리나 검증을 고려하지 않고, **정상 흐름만으로 기능을 추가하는 연습**을 한다.
+
+> 이 실습은 “기능을 하나 추가할 때 어떤 파일들이 어디까지 수정되는가”를 체감하는 것이 목적이다.
+
+---
+
+## 1. Request DTO 작성
+
+파일: `dto/request/UserEmailChangeRequest.java`
+
+### 파일 역할
+
+* 이메일 변경 요청 바디(JSON)를 표현한다.
+* 외부에서 전달되는 이메일 값을 그대로 수용한다.
+* 검증(@Email) 여부와 무관하게 **요청 계약 구조를 고정**하는 역할만 담당한다.
+
+```java
+package com.koreanit.spring.dto.request;
+
+import jakarta.validation.constraints.Email;
+
+public class UserEmailChangeRequest {
+
+    private String email;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        return email;
+    }
+}
+```
+
+---
+
+## 2. Controller 엔드포인트 추가
+
+파일: `controller/UserController.java`
+
+### 파일 역할
+
+* 이메일 변경에 대한 **HTTP API 엔드포인트**를 추가한다.
+* 요청 DTO를 Service로 전달하고, 결과를 `ApiResponse`로 감싼다.
+* 비즈니스 판단이나 DB 처리 로직은 포함하지 않는다.
+
+```java
+@PutMapping("/{id}/email")
+public ApiResponse<Void> changeEmail(
+        @PathVariable Long id,
+        @RequestBody UserEmailChangeRequest req
+) {
+    userService.changeEmail(id, req);
+    return ApiResponse.ok();
+}
+```
+
+---
+
+## 3. Service 메서드 구현
+
+파일: `service/UserService.java`
+
+### 파일 역할
+
+* Users 도메인에서 “이메일 변경”이라는 **비즈니스 동작**을 수행한다.
+* 요청 DTO에서 필요한 값만 추출하여 Repository에 전달한다.
+* 정상 흐름 기준으로 처리하며, 실패 의미 해석은 포함하지 않는다.
+
+```java
+public void changeEmail(Long id, UserEmailChangeRequest req) {
+    String email = req.getEmail();
+    userRepository.updateEmail(id, email);
+}
+```
+
+---
+
+## 4. Repository 메서드 추가
+
+### 4-1. Repository 인터페이스
+
+파일: `repository/UserRepository.java`
+
+### 파일 역할
+
+* Users 테이블에 대한 **이메일 수정 계약**을 정의한다.
+* 구현 방식(SQL, JdbcTemplate 등)은 노출하지 않는다.
+* 반환값(int)은 DB 처리 결과만 전달하며 의미 해석은 하지 않는다.
+
+```java
+int updateEmail(Long id, String email);
+```
+
+---
+
+### 4-2. JdbcTemplate 구현체
+
+파일: `repository/JdbcUserRepository.java`
+
+### 파일 역할
+
+* 이메일 변경 SQL을 실행한다.
+* 파라미터 바인딩과 update 실행만 담당한다.
+* 영향받은 row 수 외의 판단 로직은 포함하지 않는다.
+
+```java
+@Override
+public int updateEmail(Long id, String email) {
+  return jdbcTemplate.update(
+      "update users set email = ? where id = ?",
+      email, id);
+}
+```
+
+### 5. API 테스트 추가 (VSCode REST Client)
+`users.http`
+```
+### 10) 이메일 변경
+PUT {{baseUrl}}/api/users/1/email
+Content-Type: application/json
+
+{
+  "email": "email@email.com"
+}
+```
+
+---
+
+## 이 실습의 핵심 포인트
+
+* 기능 추가 시 **새 DTO + Service 메서드 + Repository 메서드**가 함께 확장된다.
+* 기존 구조(Entity / Domain / DTO, 계층 책임 분리)는 그대로 유지된다.
+* 정상 흐름 기준에서는 “성공했을 때의 동작”만 정확히 구현하면 된다.
+
+이 상태는 다음 단계인 **입력 검증(400)**, **대상 없음(404)**, **중복(409)** 을 추가하기 위한 가장 안정적인 기준선이다.
+
 
 ---
 
@@ -716,8 +865,4 @@ POST {{baseUrl}}/api/logout
 
 ## 다음 단계
 
-→ 02. 입력 검증 (400)
-→ 03. 대상 없음 처리 (404)
-→ 04. 중복 제약 처리 (409)
-→ 05. 인증 (401) – SecurityContext + Session
-→ 06. 인가 (403)
+→ [**입력 검증 (400) — DTO(@Valid) + Service(정규화)**](02-service_input_validation_400.md)
