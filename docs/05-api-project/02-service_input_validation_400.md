@@ -467,6 +467,5 @@ Content-Type: application/json
 
 ## 다음 단계
 
-* 대상 없음 처리 (404)
-* 중복 제약 해석 (409)
-* 인증 / 인가 처리 (401 / 403)
+→ [**대상 없음 처리 (404) – Service (ApiException 적용)**](03-not_found_handling_404.md)
+

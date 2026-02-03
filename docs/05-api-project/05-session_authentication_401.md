@@ -1,4 +1,4 @@
-# 05. 인증 (401) — Session + Spring Security
+# 인증 (401) — Session + Spring Security
 
 ## 1. 단계 목표
 
@@ -445,4 +445,4 @@ POST {{baseUrl}}/api/logout
 
 ## 다음 단계
 
-인가 (403)
+→ [**인가 (403) — Role 테이블 기반 접근 제어 + Method Security**](06-security_authorization_403.md)

@@ -1,4 +1,4 @@
-# 03. 대상 없음 처리 (404) – Service 결과 해석 (ApiException 적용)
+# 대상 없음 처리 (404) – Service (ApiException 적용)
 
 이 문서는 Users CRUD에서 **대상이 존재하지 않는 경우를 404로 처리**하는 기준을 정의한다.
 
@@ -233,5 +233,5 @@ DELETE {{baseUrl}}/api/users/999999
 
 ## 다음 단계
 
-* 중복 제약(UNIQUE) 해석 (409)
-* 인증/인가(401/403)
+→ [**중복 제약 해석 (409) – ErrorCode + ApiException**](04-duplicate_key_handling_409.md)
+

@@ -1,4 +1,4 @@
-# 04. 중복 제약 해석 (409) – ErrorCode + ApiException
+# 중복 제약 해석 (409) – ErrorCode + ApiException
 
 이 문서는 Users CRUD에서 **UNIQUE 제약 위반(중복)** 을
 **ErrorCode + ApiException 구조**로 해석하여 **409 Conflict** 로 처리하는 기준을 정의한다.
@@ -169,4 +169,4 @@ Content-Type: application/json
 
 ## 다음 단계
 
-* 인증 / 인가 (401 / 403)
+→ [**인증 (401) — Session + Spring Security**](05-session_authentication_401.md)
