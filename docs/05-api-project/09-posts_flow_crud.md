@@ -351,8 +351,7 @@ public class PostController {
 ### 로그아웃(세션 삭제)
 POST {{host}}/api/logout
 
-### 0) 회원가입 (정상)
-# 이미 가입된 계정이면 이 단계는 생략하고 로그인으로 진행
+### 회원가입
 POST {{host}}/api/users
 Content-Type: application/json
 
@@ -363,8 +362,7 @@ Content-Type: application/json
   "email": "post_user1@example.com"
 }
 
-### 1) 로그인 (정상) - 세션 쿠키 발급
-# 로그인 성공하면 이후 요청에 쿠키가 자동으로 붙는다
+### 로그인 - 세션 쿠키 발급
 POST {{host}}/api/login
 Content-Type: application/json
 
@@ -373,11 +371,8 @@ Content-Type: application/json
   "password": "pass1234!"
 }
 
-### 2) 게시글 생성 (정상)
+### 게시글 생성
 # 작성자(user_id)는 서버(SecurityContext)에서 결정된다고 가정
-# @name 으로 응답을 저장해서 다음 요청에서 id를 꺼내 쓴다
-# (ApiResponse.data.id 경로 가정)
-# 응답 구조가 다르면 아래 변수 경로만 맞춰주면 된다
 # @name createPost
 POST {{host}}/api/posts
 Content-Type: application/json
@@ -387,18 +382,14 @@ Content-Type: application/json
   "content": "내용입니다"
 }
 
-### 3) 생성된 id 변수로 저장
-# REST Client 변수: {{createPost.response.body.data.id}}
-@postId = {{createPost.response.body.data.id}}
+### 게시글 단건 조회
+GET {{host}}/api/posts/1
 
-### 4) 게시글 단건 조회 (정상)
-GET {{host}}/api/posts/{{postId}}
-
-### 5) 게시글 목록 조회 (정상)
+### 게시글 목록 조회
 GET {{host}}/api/posts?limit=20
 
-### 6) 게시글 수정 (정상)
-PUT {{host}}/api/posts/{{postId}}
+### 게시글 수정
+PUT {{host}}/api/posts/1
 Content-Type: application/json
 
 {
@@ -406,14 +397,8 @@ Content-Type: application/json
   "content": "수정된 내용"
 }
 
-### 7) 수정 결과 단건 재조회 (정상)
-GET {{host}}/api/posts/{{postId}}
-
-### 8) 게시글 삭제 (정상)
-DELETE {{host}}/api/posts/{{postId}}
-
-### 9) 삭제 후 목록 재조회 (정상)
-GET {{host}}/api/posts?limit=20
+### 게시글 삭제
+DELETE {{host}}/api/posts/1
 ```
 
 ---
