@@ -13,7 +13,7 @@
 
 ---
 
-## 0. 전제 조건
+## 전제 조건
 
 이 문서는 다음 공통 모듈이 **이미 적용되어 있음**을 전제로 한다.
 
@@ -25,6 +25,43 @@
 
 * Entity / Domain / DTO 계층 분리
 * Repository / Service / Controller 책임 분리
+
+
+---
+
+## 도메인 중심 패키지 구조
+
+```text
+com.koreanit.spring
+├─ Application.java
+├─ common
+├─ security
+│  ├─ AuthController.java
+│  ├─ SecurityConfig.java
+│  ├─ MethodSecurityConfig.java
+│  ├─ SessionAuthenticationFilter.java
+│  ├─ LoginUser.java
+│  ├─ SecurityUtils.java
+│  ├─ UserRoleRepository.java
+│  └─ JdbcUserRoleRepository.java
+│
+└─ user
+   ├─ UserController.java
+   ├─ UserService.java
+   ├─ UserRepository.java
+   ├─ JdbcUserRepository.java
+   ├─ UserEntity.java
+   ├─ User.java
+   ├─ UserMapper.java
+   └─ dto
+      ├─ request
+      │  ├─ UserCreateRequest.java
+      │  ├─ UserLoginRequest.java
+      │  ├─ UserEmailChangeRequest.java
+      │  └─ UserPasswordChangeRequest.java
+      └─ response
+         └─ UserResponse.java
+```
 
 ---
 
@@ -100,7 +137,7 @@ DTO는 외부 요청/응답 계약만을 표현하며, 도메인 규칙이나 �
 
 ### 4-1. 회원가입 요청 DTO
 
-파일: `dto/request/UserCreateRequest.java`
+파일: `user/dto/request/UserCreateRequest.java`
 
 #### 파일 역할
 
@@ -156,7 +193,7 @@ public class UserCreateRequest {
 
 ### 4-2. 로그인 요청 DTO
 
-파일: `dto/request/UserLoginRequest.java`
+파일: `user/dto/request/UserLoginRequest.java`
 
 #### 파일 역할
 
@@ -193,7 +230,7 @@ public class UserLoginRequest {
 
 ### 4-3. 비밀번호 변경 요청 DTO
 
-파일: `dto/request/UserPasswordChangeRequest.java`
+파일: `user/dto/request/UserPasswordChangeRequest.java`
 
 #### 파일 역할
 
@@ -219,7 +256,7 @@ public class UserPasswordChangeRequest {
 
 ### 4-4. 닉네임 변경 요청 DTO
 
-파일: `dto/request/UserNicknameChangeRequest.java`
+파일: `user/dto/request/UserNicknameChangeRequest.java`
 
 #### 파일 역할
 
@@ -247,7 +284,7 @@ Repository 계층은 **DB 접근 전담 계층**이며, 의미 해석을 수행�
 
 ### 5-1. Repository 인터페이스
 
-파일: `repository/UserRepository.java`
+파일: `user/UserRepository.java`
 
 #### 파일 역할
 
@@ -283,7 +320,7 @@ public interface UserRepository {
 
 ### 5-2. JdbcTemplate 구현체
 
-파일: `repository/impl/JdbcUserRepository.java`
+파일: `user/JdbcUserRepository.java`
 
 #### 파일 역할
 
@@ -422,7 +459,7 @@ public class JdbcUserRepository implements UserRepository {
 
 ## 6. Service 계층 (정상 흐름 제어)
 
-파일: `service/UserService.java`
+파일: `user/UserService.java`
 
 #### 파일 역할
 
@@ -516,7 +553,7 @@ public class UserService {
 
 ### 7-1. Users CRUD Controller
 
-파일: `controller/UserController.java`
+파일: `user/UserController.java`
 
 #### 파일 역할
 
@@ -585,7 +622,7 @@ public class UserController {
 
 ### 7-2. 인증 Controller (세션 기반)
 
-파일: `controller/AuthController.java`
+파일: `security/AuthController.java`
 
 #### 파일 역할
 
@@ -721,7 +758,7 @@ DELETE {{baseUrl}}/api/users/1
 
 ## 1. Request DTO 작성
 
-파일: `dto/request/UserEmailChangeRequest.java`
+파일: `user/dto/request/UserEmailChangeRequest.java`
 
 ### 파일 역할
 
@@ -752,7 +789,7 @@ public class UserEmailChangeRequest {
 
 ## 2. Controller 엔드포인트 추가
 
-파일: `controller/UserController.java`
+파일: `user/UserController.java`
 
 ### 파일 역할
 
@@ -775,7 +812,7 @@ public ApiResponse<Void> changeEmail(
 
 ## 3. Service 메서드 구현
 
-파일: `service/UserService.java`
+파일: `user/UserService.java`
 
 ### 파일 역할
 
@@ -796,7 +833,7 @@ public void changeEmail(Long id, UserEmailChangeRequest req) {
 
 ### 4-1. Repository 인터페이스
 
-파일: `repository/UserRepository.java`
+파일: `user/UserRepository.java`
 
 ### 파일 역할
 
@@ -812,7 +849,7 @@ int updateEmail(Long id, String email);
 
 ### 4-2. JdbcTemplate 구현체
 
-파일: `repository/JdbcUserRepository.java`
+파일: `user/JdbcUserRepository.java`
 
 ### 파일 역할
 

@@ -61,7 +61,7 @@ Repository는 여전히 **DB 접근만 담당**한다.
 
 ### 3-1. 중복 메시지 변환 로직
 
-파일: `service/UserService.java`
+파일: `user/UserService.java`
 
 #### 적용 목적
 
@@ -90,7 +90,7 @@ private String toDuplicateMessage(DuplicateKeyException e) {
 
 ### 3-2. 회원가입(create) 중복 처리
 
-파일: `service/UserService.java`
+파일: `user/UserService.java`
 
 #### 처리 기준
 

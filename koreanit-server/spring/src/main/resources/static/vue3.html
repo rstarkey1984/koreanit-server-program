@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Koreanit Board</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Vue 3 (CDN) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="app" class="min-h-screen">
+    <!-- Top Bar -->
+    <header class="border-b bg-white">
+      <div class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <button
+            class="text-lg font-semibold hover:text-slate-700"
+            @click="go('posts')"
+          >
+            Koreanit Board
+          </button>
+          <span class="text-xs text-slate-500">API: {{ apiBase }}</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <template v-if="auth.loggedIn">
+            <span class="text-sm text-slate-700">
+              로그인됨
+              <span class="font-medium" v-if="auth.me">
+                ({{ auth.me.username }} / {{ auth.me.nickname || auth.me.username }})
+              </span>
+            </span>
+            <button
+              class="px-3 py-1.5 rounded-md bg-slate-900 text-white text-sm hover:bg-slate-800"
+              @click="go('newPost')"
+            >
+              새 글
+            </button>
+            <button
+              class="px-3 py-1.5 rounded-md bg-slate-200 text-slate-900 text-sm hover:bg-slate-300"
+              @click="logout"
+            >
+              로그아웃
+            </button>
+          </template>
+
+          <template v-else>
+            <button
+              class="px-3 py-1.5 rounded-md bg-slate-900 text-white text-sm hover:bg-slate-800"
+              @click="go('login')"
+            >
+              로그인
+            </button>
+            <button
+              class="px-3 py-1.5 rounded-md bg-slate-200 text-slate-900 text-sm hover:bg-slate-300"
+              @click="go('signup')"
+            >
+              회원가입
+            </button>
+          </template>
+        </div>
+      </div>
+    </header>
+
+    <!-- Global Alert -->
+    <div class="mx-auto max-w-5xl px-4 pt-4" v-if="ui.alert.show">
+      <div
+        class="rounded-lg border p-3"
+        :class="ui.alert.type === 'error'
+          ? 'border-red-200 bg-red-50 text-red-800'
+          : 'border-emerald-200 bg-emerald-50 text-emerald-800'"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="text-sm">
+            <div class="font-semibold" v-if="ui.alert.title">{{ ui.alert.title }}</div>
+            <div class="whitespace-pre-wrap">{{ ui.alert.message }}</div>
+            <div class="text-xs opacity-80 mt-1" v-if="ui.alert.code">code: {{ ui.alert.code }}</div>
+          </div>
+          <button class="text-sm opacity-70 hover:opacity-100" @click="ui.alert.show=false">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <main class="mx-auto max-w-5xl px-4 py-6">
+      <!-- Posts List -->
+      <section v-if="route.name === 'posts'" class="space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-xl font-semibold">게시글 목록</h1>
+          <div class="flex items-center gap-2">
+            <select v-model.number="posts.limit" class="border rounded-md px-2 py-1 text-sm bg-white">
+              <option :value="10">10</option>
+              <option :value="20">20</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+            <button
+              class="px-3 py-1.5 rounded-md bg-slate-200 text-slate-900 text-sm hover:bg-slate-300"
+              @click="loadPosts"
+              :disabled="ui.loading"
+            >
+              새로고침
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border bg-white overflow-hidden">
+          <div class="p-3 border-b flex items-center justify-between">
+            <div class="text-sm text-slate-600">
+              총 {{ posts.items.length }}개 (limit {{ posts.limit }})
+            </div>
+            <div class="text-sm text-slate-500" v-if="ui.loading">로딩 중...</div>
+          </div>
+
+          <div v-if="posts.items.length === 0" class="p-6 text-sm text-slate-500">
+            게시글이 없습니다.
+          </div>
+
+          <ul v-else class="divide-y">
+            <li
+              v-for="p in posts.items"
+              :key="p.id"
+              class="p-4 hover:bg-slate-50 cursor-pointer"
+              @click="openPost(p.id)"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="font-semibold truncate">{{ p.title }}</div>
+                  <div class="text-sm text-slate-600 mt-1 line-clamp-2">
+                    {{ p.summary || p.content }}
+                  </div>
+                  <div class="text-xs text-slate-500 mt-2">
+                    id: {{ p.id }} | userId: {{ p.userId }} |
+                    view: {{ p.viewCount ?? '-' }} |
+                    comments: {{ p.commentsCnt ?? '-' }} |
+                    createdAt: {{ fmt(p.createdAt) }}
+                  </div>
+                </div>
+                <div class="shrink-0">
+                  <span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700">
+                    상세보기
+                  </span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Login -->
+      <section v-if="route.name === 'login'" class="max-w-lg">
+        <h1 class="text-xl font-semibold">로그인</h1>
+        <p class="text-sm text-slate-600 mt-2">
+          세션 기반이면 로그인 성공 시 쿠키가 내려오고, 이후 요청은 credentials 포함으로 전송됩니다.
+        </p>
+
+        <div class="mt-4 rounded-xl border bg-white p-5 space-y-4">
+          <div>
+            <label class="text-sm font-medium">username</label>
+            <input v-model="loginForm.username" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+          <div>
+            <label class="text-sm font-medium">password</label>
+            <input v-model="loginForm.password" type="password" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm hover:bg-slate-800"
+              @click="login"
+              :disabled="ui.loading"
+            >
+              로그인
+            </button>
+            <button
+              class="px-4 py-2 rounded-md bg-slate-200 text-slate-900 text-sm hover:bg-slate-300"
+              @click="go('signup')"
+            >
+              회원가입으로
+            </button>
+            <button
+              class="ml-auto px-4 py-2 rounded-md bg-white border text-slate-900 text-sm hover:bg-slate-50"
+              @click="go('posts')"
+            >
+              목록으로
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-500">
+            기본 가정: POST {{ apiBase }}/api/login {"{username,password}"}
+          </div>
+        </div>
+      </section>
+
+      <!-- Signup -->
+      <section v-if="route.name === 'signup'" class="max-w-lg">
+        <h1 class="text-xl font-semibold">회원가입</h1>
+        <p class="text-sm text-slate-600 mt-2">
+          기본 가정: POST /api/users 로 생성.
+        </p>
+
+        <div class="mt-4 rounded-xl border bg-white p-5 space-y-4">
+          <div>
+            <label class="text-sm font-medium">username</label>
+            <input v-model="signupForm.username" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+          <div>
+            <label class="text-sm font-medium">email</label>
+            <input v-model="signupForm.email" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+          <div>
+            <label class="text-sm font-medium">nickname</label>
+            <input v-model="signupForm.nickname" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+          <div>
+            <label class="text-sm font-medium">password</label>
+            <input v-model="signupForm.password" type="password" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm hover:bg-slate-800"
+              @click="signup"
+              :disabled="ui.loading"
+            >
+              회원가입
+            </button>
+            <button
+              class="px-4 py-2 rounded-md bg-slate-200 text-slate-900 text-sm hover:bg-slate-300"
+              @click="go('login')"
+            >
+              로그인으로
+            </button>
+            <button
+              class="ml-auto px-4 py-2 rounded-md bg-white border text-slate-900 text-sm hover:bg-slate-50"
+              @click="go('posts')"
+            >
+              목록으로
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-500">
+            주의: 서버의 UserCreateRequest 필드명이 다르면 여기 payload 키를 맞춰야 합니다.
+          </div>
+        </div>
+      </section>
+
+      <!-- Post Detail -->
+      <section v-if="route.name === 'postDetail'" class="space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-xl font-semibold">게시글 상세</h1>
+          <div class="flex items-center gap-2">
+            <button
+              class="px-3 py-1.5 rounded-md bg-white border text-sm hover:bg-slate-50"
+              @click="go('posts')"
+            >
+              목록
+            </button>
+            <button
+              v-if="auth.loggedIn"
+              class="px-3 py-1.5 rounded-md bg-slate-200 text-sm hover:bg-slate-300"
+              @click="go('editPost', { id: route.params.id })"
+              :disabled="!postDetail.item"
+            >
+              수정
+            </button>
+            <button
+              v-if="auth.loggedIn"
+              class="px-3 py-1.5 rounded-md bg-red-600 text-white text-sm hover:bg-red-500"
+              @click="deletePost(route.params.id)"
+              :disabled="!postDetail.item || ui.loading"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border bg-white p-5" v-if="postDetail.item">
+          <div class="text-xs text-slate-500">
+            id: {{ postDetail.item.id }} | userId: {{ postDetail.item.userId }} |
+            view: {{ postDetail.item.viewCount ?? '-' }} |
+            comments: {{ postDetail.item.commentsCnt ?? '-' }} |
+            createdAt: {{ fmt(postDetail.item.createdAt) }}
+          </div>
+
+          <h2 class="text-lg font-semibold mt-2">{{ postDetail.item.title }}</h2>
+
+          <div class="mt-4 text-sm whitespace-pre-wrap leading-6">
+            {{ postDetail.item.content }}
+          </div>
+
+          <div class="mt-4 text-xs text-slate-500" v-if="postDetail.item.summary">
+            summary: {{ postDetail.item.summary }}
+          </div>
+        </div>
+
+        <div class="rounded-xl border bg-white p-5 text-sm text-slate-500" v-else>
+          로딩 중이거나 게시글이 없습니다.
+        </div>
+      </section>
+
+      <!-- New Post -->
+      <section v-if="route.name === 'newPost'" class="max-w-3xl space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-xl font-semibold">새 글 작성</h1>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 rounded-md bg-white border text-sm hover:bg-slate-50" @click="go('posts')">
+              목록
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border bg-white p-5 space-y-4">
+          <div>
+            <label class="text-sm font-medium">title</label>
+            <input v-model="postEditor.title" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+
+          <div>
+            <label class="text-sm font-medium">content</label>
+            <textarea v-model="postEditor.content" rows="10" class="mt-1 w-full border rounded-md px-3 py-2 bg-white"></textarea>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm hover:bg-slate-800"
+              @click="createPost"
+              :disabled="ui.loading"
+            >
+              등록
+            </button>
+            <button
+              class="px-4 py-2 rounded-md bg-slate-200 text-slate-900 text-sm hover:bg-slate-300"
+              @click="resetPostEditor"
+            >
+              초기화
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-500">
+            기본 가정: POST /api/posts {"{title,content}"}
+          </div>
+        </div>
+
+        <div class="rounded-xl border bg-amber-50 border-amber-200 p-4 text-sm text-amber-800" v-if="!auth.loggedIn">
+          로그인 상태가 아니면 서버에서 401/403이 날 수 있습니다.
+        </div>
+      </section>
+
+      <!-- Edit Post -->
+      <section v-if="route.name === 'editPost'" class="max-w-3xl space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-xl font-semibold">게시글 수정</h1>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1.5 rounded-md bg-white border text-sm hover:bg-slate-50" @click="go('posts')">
+              목록
+            </button>
+            <button
+              class="px-3 py-1.5 rounded-md bg-slate-200 text-sm hover:bg-slate-300"
+              @click="openPost(route.params.id)"
+            >
+              상세
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border bg-white p-5 space-y-4">
+          <div class="text-xs text-slate-500">id: {{ route.params.id }}</div>
+
+          <div>
+            <label class="text-sm font-medium">title</label>
+            <input v-model="postEditor.title" class="mt-1 w-full border rounded-md px-3 py-2 bg-white" />
+          </div>
+
+          <div>
+            <label class="text-sm font-medium">content</label>
+            <textarea v-model="postEditor.content" rows="10" class="mt-1 w-full border rounded-md px-3 py-2 bg-white"></textarea>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm hover:bg-slate-800"
+              @click="updatePost(route.params.id)"
+              :disabled="ui.loading"
+            >
+              저장
+            </button>
+            <button
+              class="px-4 py-2 rounded-md bg-slate-200 text-slate-900 text-sm hover:bg-slate-300"
+              @click="loadPostIntoEditor(route.params.id)"
+              :disabled="ui.loading"
+            >
+              다시 불러오기
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-500">
+            기본 가정: PUT /api/posts/{id} {"{title,content}"}
+          </div>
+        </div>
+
+        <div class="rounded-xl border bg-amber-50 border-amber-200 p-4 text-sm text-amber-800" v-if="!auth.loggedIn">
+          로그인 상태가 아니면 서버에서 401/403이 날 수 있습니다.
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-10 text-xs text-slate-500">
+        <div class="border-t pt-4">
+          <div>Vue3 + Tailwind 단일 파일 예제</div>
+          <div class="mt-1">
+            세션 기반이면 서버/프록시/CORS 설정에 따라 쿠키가 막힐 수 있습니다.
+            같은 오리진(스프링부트 static)에 두는 게 가장 단순합니다.
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const { createApp, reactive } = Vue;
+
+    createApp({
+      setup() {
+        const apiBase = "http://localhost:8080";
+
+        const ui = reactive({
+          loading: false,
+          alert: {
+            show: false,
+            type: "ok", // ok | error
+            title: "",
+            message: "",
+            code: ""
+          }
+        });
+
+        const route = reactive({
+          name: "posts",
+          params: {}
+        });
+
+        const auth = reactive({
+          loggedIn: false,
+          me: null
+        });
+
+        const posts = reactive({
+          limit: 20,
+          items: []
+        });
+
+        const postDetail = reactive({
+          item: null
+        });
+
+        const loginForm = reactive({
+          username: "",
+          password: ""
+        });
+
+        const signupForm = reactive({
+          username: "",
+          email: "",
+          nickname: "",
+          password: ""
+        });
+
+        const postEditor = reactive({
+          title: "",
+          content: ""
+        });
+
+        function showOk(message, title = "OK") {
+          ui.alert.show = true;
+          ui.alert.type = "ok";
+          ui.alert.title = title;
+          ui.alert.message = message || "";
+          ui.alert.code = "";
+        }
+
+        function showError(message, code = "", title = "ERROR") {
+          ui.alert.show = true;
+          ui.alert.type = "error";
+          ui.alert.title = title;
+          ui.alert.message = message || "요청 실패";
+          ui.alert.code = code || "";
+        }
+
+        function fmt(v) {
+          if (!v) return "-";
+          // LocalDateTime 문자열(예: 2026-02-04T12:34:56)을 가볍게 표시
+          return String(v).replace("T", " ");
+        }
+
+        function go(name, params = {}) {
+          route.name = name;
+          route.params = params;
+
+          // 화면 전환 시 필요한 자동 로딩
+          if (name === "posts") loadPosts();
+          if (name === "postDetail") loadPost(params.id);
+          if (name === "editPost") loadPostIntoEditor(params.id);
+          if (name === "newPost") resetPostEditor();
+        }
+
+        async function api(path, { method = "GET", body = null } = {}) {
+          ui.loading = true;
+          try {
+            const res = await fetch(apiBase + path, {
+              method,
+              headers: body ? { "Content-Type": "application/json" } : undefined,
+              body: body ? JSON.stringify(body) : null,
+              credentials: "include"
+            });
+
+            // 응답이 JSON이 아닐 수도 있으니 방어
+            const text = await res.text();
+            let json = null;
+            try { json = text ? JSON.parse(text) : null; } catch (_) { json = null; }
+
+            // ApiResponse 가정
+            if (json && typeof json.success === "boolean") {
+              if (json.success) return json; // {success,message,data,code}
+              throw { api: true, message: json.message, code: json.code, status: res.status };
+            }
+
+            // ApiResponse 형식이 아니면 status 기반으로 처리
+            if (!res.ok) {
+              throw { api: false, message: text || "요청 실패", status: res.status };
+            }
+
+            return { success: true, message: "OK", data: json };
+          } finally {
+            ui.loading = false;
+          }
+        }
+
+        // -------- Auth --------
+
+        async function login() {
+          // 가정: POST /api/login { username, password }
+          try {
+            const r = await api("/api/login", {
+              method: "POST",
+              body: { username: loginForm.username, password: loginForm.password }
+            });
+            showOk(r.message || "로그인 성공");
+            auth.loggedIn = true;
+            // 선택: 로그인 후 내 정보 조회(서버에 /api/me 같은 게 있으면 붙이기)
+            go("posts");
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        async function logout() {
+          // 가정: POST /api/logout (스프링 시큐리티 logout 사용 가능)
+          try {
+            await api("/api/logout", { method: "POST" });
+          } catch (_) {
+            // 로그아웃 API가 없을 수도 있으니 조용히 처리
+          }
+          auth.loggedIn = false;
+          auth.me = null;
+          showOk("로그아웃 처리됨");
+          go("posts");
+        }
+
+        async function signup() {
+          // 가정: POST /api/users
+          // UserCreateRequest 필드명이 다르면 여기를 맞춰야 함
+          try {
+            const r = await api("/api/users", {
+              method: "POST",
+              body: {
+                username: signupForm.username,
+                email: signupForm.email,
+                password: signupForm.password,
+                nickname: signupForm.nickname
+              }
+            });
+            showOk(`회원가입 완료 (userId: ${r.data})`);
+            go("login");
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        // -------- Posts --------
+
+        async function loadPosts() {
+          try {
+            const r = await api(`/api/posts?limit=${encodeURIComponent(posts.limit)}`);
+            posts.items = Array.isArray(r.data) ? r.data : [];
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        async function openPost(id) {
+          go("postDetail", { id });
+        }
+
+        async function loadPost(id) {
+          postDetail.item = null;
+          if (!id) return;
+          try {
+            const r = await api(`/api/posts/${encodeURIComponent(id)}`);
+            postDetail.item = r.data || null;
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        function resetPostEditor() {
+          postEditor.title = "";
+          postEditor.content = "";
+        }
+
+        async function createPost() {
+          try {
+            const r = await api("/api/posts", {
+              method: "POST",
+              body: { title: postEditor.title, content: postEditor.content }
+            });
+            showOk("등록 완료");
+            // 서버가 PostResponse를 반환한다고 가정
+            const id = r.data?.id;
+            if (id) go("postDetail", { id });
+            else go("posts");
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        async function loadPostIntoEditor(id) {
+          resetPostEditor();
+          if (!id) return;
+          try {
+            const r = await api(`/api/posts/${encodeURIComponent(id)}`);
+            const p = r.data;
+            if (!p) return;
+            postEditor.title = p.title || "";
+            postEditor.content = p.content || "";
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        async function updatePost(id) {
+          if (!id) return;
+          try {
+            const r = await api(`/api/posts/${encodeURIComponent(id)}`, {
+              method: "PUT",
+              body: { title: postEditor.title, content: postEditor.content }
+            });
+            showOk("수정 완료");
+            const newId = r.data?.id ?? id;
+            go("postDetail", { id: newId });
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        async function deletePost(id) {
+          if (!id) return;
+          const ok = confirm("정말 삭제할까요?");
+          if (!ok) return;
+
+          try {
+            await api(`/api/posts/${encodeURIComponent(id)}`, { method: "DELETE" });
+            showOk("삭제 완료");
+            go("posts");
+          } catch (e) {
+            showError(normalizeErr(e), e.code || "");
+          }
+        }
+
+        function normalizeErr(e) {
+          if (!e) return "요청 실패";
+          if (typeof e === "string") return e;
+          if (e.api) return e.message || "요청 실패";
+          if (e.message) return e.message;
+          return "요청 실패";
+        }
+
+        // 초기 로딩
+        loadPosts();
+
+        return {
+          apiBase,
+          ui,
+          route,
+          auth,
+          posts,
+          postDetail,
+          loginForm,
+          signupForm,
+          postEditor,
+          fmt,
+          go,
+          loadPosts,
+          openPost,
+          login,
+          logout,
+          signup,
+          createPost,
+          updatePost,
+          deletePost,
+          loadPostIntoEditor
+        };
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>

@@ -102,7 +102,7 @@ Session
 
 ---
 
-### Posts API
+### Posts API (실습)
 
 | Method | Path            | 설명     |
 | ------ | --------------- | ------ |

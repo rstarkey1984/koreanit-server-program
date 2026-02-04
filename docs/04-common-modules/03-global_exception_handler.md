@@ -78,8 +78,6 @@ ApiResponse 실패 응답 생성
 클라이언트 응답
 ```
 
-이 흐름을 이해하면
-왜 Controller에 try-catch를 두면 안 되는지 자연스럽게 알 수 있다.
 
 ---
 
@@ -93,9 +91,6 @@ public void create(@Valid @RequestBody User user) {
     userService.register(user);
 }
 ```
-
-많은 사람이 이 메서드 안에서 검증이 일어난다고 생각하지만,
-실제로는 그렇지 않다.
 
 > **@Valid 검증은 Controller 메서드가 실행되기 전에 수행된다**
 
@@ -122,44 +117,24 @@ public void create(@Valid @RequestBody User user) {
 
 ---
 
-## 5. Controller는 왜 예외를 처리하지 않는가
-
-Controller의 책임은 단순하다.
-
-* HTTP 요청을 받는다
-* Service를 호출한다
-* 응답을 반환한다
-
-Controller가 예외를 직접 처리하기 시작하면:
-
-* 비즈니스 흐름과 HTTP 처리 로직이 섞이고
-* 공통 규칙을 유지하기 어려워지며
-* 유지보수 비용이 급격히 증가한다
-
-그래서 Controller는
-**예외를 잡지 않고 그대로 던진다.**
-
-예외를 어떻게 응답으로 바꿀지는
-Global Exception Handler의 책임이다.
-
----
-
-## 6. 전역 예외 처리 대상 정리
+## 5. 이 문서의 전역 예외 처리 대상 정리
 
 이 프로젝트에서
 Global Exception Handler가 책임지는 예외는 다음과 같다.
 
-| 구분            | 예외                              | 발생 주체  |
-| ------------- | ------------------------------- | ------ |
-| 비즈니스 예외       | ApiException                    | 개발자    |
-| 요청 바디 오류      | HttpMessageNotReadableException | Spring |
-| Validation 실패 | MethodArgumentNotValidException | Spring |
-| 처리되지 않은 예외    | Exception                       | 시스템    |
+| 구분                | 예외 타입                             | 발생 계층                | 의미 / 처리 의도                              | HTTP 상태                   |
+| ----------------- | --------------------------------- | -------------------- | --------------------------------------- | ------------------------- |
+| **비즈니스 예외**       | `ApiException`                    | Service / Repository | 개발자가 의도적으로 던진 도메인·비즈니스 오류               | `ErrorCode`에 정의된 상태       |
+| **중복 제약 위반**      | `DuplicateKeyException`           | Repository (DB)      | UNIQUE 제약 조건 위반 (예: username, email 중복) | 409 CONFLICT              |
+| **요청 바디 오류**      | `HttpMessageNotReadableException` | Controller 이전        | 요청 바디 없음 / JSON 파싱 오류 / 타입 불일치          | 400 BAD REQUEST           |
+| **Validation 실패** | `MethodArgumentNotValidException` | Controller 이전        | `@Valid` 검증 실패                          | 400 BAD REQUEST           |
+| **예상하지 못한 예외**    | `Exception`                       | 전 구간                 | 매핑되지 않은 모든 런타임 예외 (버그/누락)               | 500 INTERNAL SERVER ERROR |
+
 
 
 ---
 
-## 7. GlobalExceptionHandler 구현
+## 6. GlobalExceptionHandler 구현
 
 아래 코드는
 이 장에서 사용할 최종 GlobalExceptionHandler 구현이다.
@@ -267,7 +242,7 @@ public class GlobalExceptionHandler {
 ## 8. @RestControllerAdvice 구현의 의미
 
 이 구현의 핵심은 **예외의 발생 위치(Controller/Service/Repository)와 상관없이**
-응답 변환은 항상 여기서 일어나도록 하는 것이다.
+에러가 발생했을때 응답 변환은 항상 여기서 일어나도록 하는 것이다.
 
 ### 8-1. `@RestControllerAdvice`가 커버하는 범위
 
@@ -404,7 +379,6 @@ public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e)
 
 * 예외 처리는 전역에서 한 번만 한다
 * Global Exception Handler는 응답 변환 지점이다
-* Controller는 예외를 처리하지 않고 던진다
 * Validation 예외는 Controller 이전 단계에서 발생한다
 * 모든 실패 응답은 ApiResponse로 통일된다
 

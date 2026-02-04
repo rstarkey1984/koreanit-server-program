@@ -415,4 +415,4 @@ DELETE {{host}}/api/posts/1
 
 ## 다음 단계
 
-[**Posts API 에러 핸들링 (400/404/401/403) + 조회수 증가(@Transactional)**](10-error_handling.md)
+[**Posts API 에러 핸들링 (400/404/401/403) + 조회수 증가(@Transactional)**](09-error_handling.md)

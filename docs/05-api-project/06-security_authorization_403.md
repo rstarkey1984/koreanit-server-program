@@ -97,7 +97,7 @@ INSERT INTO user_roles (user_id, role) VALUES (1, 'ROLE_USER');
 
 ### 5-1. Repository 인터페이스
 
-파일: `repository/UserRoleRepository.java`
+파일: `security/UserRoleRepository.java`
 
 ```java
 package com.koreanit.spring.repository;
@@ -116,7 +116,7 @@ public interface UserRoleRepository {
 
 ### 5-2. JdbcTemplate 구현체
 
-파일: `repository/impl/JdbcUserRoleRepository.java`
+파일: `security/JdbcUserRoleRepository.java`
 
 ```java
 package com.koreanit.spring.repository.impl;
@@ -165,7 +165,7 @@ public class JdbcUserRoleRepository implements UserRoleRepository {
 
 06 단계에서는 최소한의 정책으로, 신규 가입 시 `ROLE_USER`를 자동 부여하는 것을 권장한다.
 
-파일: `service/UserService.java` (회원 생성 흐름)
+파일: `user/UserService.java` (회원 생성 흐름)
 
 ```java
 // 정상 흐름: 회원가입 → PK 반환
@@ -527,7 +527,7 @@ public class SecurityUtils {
 * 관리자: 누구든 변경 가능
 * 일반 사용자: 본인만 변경 가능
 
-파일: `service/UserService.java`
+파일: `user/UserService.java`
 
 ```java
 

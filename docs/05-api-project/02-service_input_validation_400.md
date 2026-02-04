@@ -54,7 +54,7 @@ implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 ### 1-1) 회원가입 요청 DTO
 
-파일: `dto/request/UserCreateRequest.java`
+파일: `user/dto/request/UserCreateRequest.java`
 
 #### 파일 역할
 
@@ -129,7 +129,7 @@ public class UserCreateRequest {
 
 ### 1-2) 로그인 요청 DTO
 
-파일: `dto/request/UserLoginRequest.java`
+파일: `user/dto/request/UserLoginRequest.java`
 
 #### 파일 역할
 
@@ -166,7 +166,7 @@ public class UserLoginRequest {
 
 ### 1-3) 비밀번호 변경 요청 DTO
 
-파일: `dto/request/UserPasswordChangeRequest.java`
+파일: `user/dto/request/UserPasswordChangeRequest.java`
 
 #### 파일 역할
 
@@ -197,7 +197,7 @@ public class UserPasswordChangeRequest {
 
 ### 1-4) 닉네임 변경 요청 DTO
 
-파일: `dto/request/UserNicknameChangeRequest.java`
+파일: `user/dto/request/UserNicknameChangeRequest.java`
 
 #### 파일 역할
 
@@ -227,7 +227,7 @@ public class UserNicknameChangeRequest {
 
 ## 2. Controller에서 @Valid 적용
 
-파일: `controller/UserController.java`
+파일: `user/UserController.java`
 
 #### 파일 역할
 
@@ -260,7 +260,7 @@ public ApiResponse<Void> changePassword(
 
 ## 3. Service는 정규화 및 정상 흐름 로직만 담당
 
-파일: `service/UserService.java`
+파일: `user/UserService.java`
 
 #### 파일 역할
 
@@ -368,7 +368,7 @@ Content-Type: application/json
 
 ## 1. Request DTO 수정
 
-파일: `dto/request/UserEmailChangeRequest.java`
+파일: `user/dto/request/UserEmailChangeRequest.java`
 
 ### 역할
 
@@ -405,7 +405,7 @@ public class UserEmailChangeRequest {
 
 ## 2. Controller 엔드포인트에 @Valid 추가
 
-파일: `controller/UserController.java`
+파일: `user/UserController.java`
 
 ### 역할
 
@@ -426,7 +426,7 @@ public ApiResponse<Void> changeEmail(
 
 ## 3. Service 메서드 수정
 
-파일: `service/UserService.java`
+파일: `user/UserService.java`
 
 ### 역할
 

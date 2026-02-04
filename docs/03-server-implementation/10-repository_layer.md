@@ -296,7 +296,7 @@ public class JdbcHelloRepository implements HelloRepository {
 
 * `/hello/users`, `/hello/posts` 조회 흐름 처리
 
-`service/HelloService.java`
+`user/HelloService.java`
 
 ```java
 package com.koreanit.spring.service;

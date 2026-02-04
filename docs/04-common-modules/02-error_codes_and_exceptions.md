@@ -76,32 +76,38 @@
 
 ## 4. 왜 공통 예외가 필요한가
 
-에러 코드는 **실패 유형의 식별자**지만,
-서버 내부에서는 “어디서/왜 실패했는지”를 **흐름으로 전달**해야 한다.
+에러 코드는 **실패 유형을 식별하는 값**이지만,
+서버 내부 로직에서는 실패를 **값이 아닌 흐름의 중단**으로 전달해야 한다.
 
-만약 예외 없이 “실패 결과를 리턴”으로 처리하면,
+실패를 단순히 “결과 값 반환”으로 처리하면 다음 문제가 발생한다.
 
-* Service가 실패 여부를 매번 if로 확인해야 하고
-* Controller도 실패 분기 로직을 갖게 되며
-* 계층 간 책임 분리가 무너진다
+* Service 계층이 모든 호출 결과에 대해 실패 여부를 `if`로 판단해야 한다
+* Controller 계층이 정상/실패 분기 로직을 함께 가지게 된다
+* 계층 간 책임 분리가 무너지고 코드 중복이 증가한다
 
-그래서 서버는 실패를 **예외(Exception)** 로 표현하고,
-에러 코드와 메시지를 함께 담은 **공통 예외(ApiException)** 를 표준으로 사용한다.
+따라서 서버는 실패를 **예외(Exception)** 로 표현하고,
+에러 코드와 메시지를 함께 담은 **공통 예외(ApiException)** 를 표준 실패 표현으로 사용한다.
 
-### 4-1. 공통 예외를 쓰면 무엇이 좋아지나
+---
 
-공통 예외를 쓰면 아래가 한 번에 정리된다.
+### 4-1. 공통 예외의 효과
 
-* 실패 유형: `ErrorCode` (고정 식별자)
-* 실패 메시지: `Exception message` (클라이언트 응답용 문장)
-* HTTP 상태 코드: `ErrorCode → HttpStatus 매핑`
-* 처리 위치: `GlobalExceptionHandler` 한 곳으로 통일
+공통 예외를 사용하면 실패 처리 기준이 일관되게 정리된다.
 
-즉,
+* 실패 유형: `ErrorCode` — 실패 원인의 고정 식별자
+* 실패 메시지: `Exception message` — 클라이언트 응답용 메시지
+* HTTP 상태 코드: `ErrorCode → HttpStatus` 매핑
+* 실패 처리 위치: `GlobalExceptionHandler` 단일 지점
 
-> Service는 “실패를 발견하면 던지고(throw)”,
-> Controller는 “정상 흐름만 호출한다.”
-> 실패 응답 변환은 Global Handler가 담당한다.
+이 구조에서 각 계층의 책임은 명확히 분리된다.
+
+* **Service**: 실패를 발견하면 즉시 예외를 던진다 (`throw`)
+* **Controller**: 정상 흐름만 호출하고 실패 분기를 갖지 않는다
+* **GlobalExceptionHandler**: 예외를 HTTP 응답으로 변환한다
+
+결과적으로 실패 처리는 중앙에서 통제되고,
+비즈니스 로직은 정상 흐름에만 집중할 수 있다.
+
 
 ---
 
@@ -143,19 +149,6 @@ public enum ErrorCode {
 
 * 애플리케이션 시작 시 한 번만 생성된다
 * 각 상수 객체는 JVM 전체에서 하나만 존재한다
-
-### 왜 `==` 비교가 가능한가
-
-```java
-ErrorCode a = ErrorCode.INVALID_REQUEST;
-ErrorCode b = ErrorCode.INVALID_REQUEST;
-
-// true
-boolean same = (a == b);
-```
-
-동일한 enum 상수는
-항상 **같은 객체 참조**를 가리키기 때문이다.
 
 > **에러 코드는 값이 아니라 의미를 가진 객체로 관리한다**
 
@@ -202,33 +195,17 @@ Repository가 던진 **데이터 접근 예외**를
 Service 계층에서 **비즈니스 의미의 예외**로 변환한다.
 
 ```java
-public User getUser(Long id) {
-    try {
-        return userRepository.findById(id);
-    } catch (EmptyResultDataAccessException e) {
-        throw new ApiException(
-            ErrorCode.NOT_FOUND_RESOURCE,
-            "존재하지 않는 사용자입니다. id=" + id
-        );
-    }
-}
+throw new RuntimeException("존재하지 않는 사용자입니다: id=" + id);
 ```
 
 ```java
-public PostRow getPost(Long id) {
-    try {
-        return postRepository.findById(id);
-    } catch (EmptyResultDataAccessException e) {
-        throw new ApiException(
-            ErrorCode.NOT_FOUND_RESOURCE,
-            "존재하지 않는 게시글입니다. id=" + id
-        );
-    }
-}
+throw new ApiException(
+    ErrorCode.NOT_FOUND_RESOURCE,
+    "존재하지 않는 사용자입니다. id=" + id
+);
 ```
 
 * Service는 **어떤 실패를 어떤 에러 코드로 변환할지만 결정**한다
-* HTTP 응답 변환 책임은 Service에 없다
 
 ---
 

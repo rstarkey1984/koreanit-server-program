@@ -503,7 +503,7 @@ public class PostMapper {
 * Repository(Entity 반환) 호출
 * Entity → Domain 변환(Mapper)
 
-`service/HelloService.java`
+`user/HelloService.java`
 
 기존코드:
 ```java

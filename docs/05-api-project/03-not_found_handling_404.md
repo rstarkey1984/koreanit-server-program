@@ -64,7 +64,7 @@ throw new ApiException(
 `JdbcTemplate.queryForObject()`는 조회 결과가 없으면 `EmptyResultDataAccessException`을 발생시킨다.
 본 단계에서는 이 DB 기술 예외를 Service에서 **404 의미로 변환**한다.
 
-### 파일: `service/UserService.java`
+### 파일: `user/UserService.java`
 
 #### 변경 목적
 
@@ -110,7 +110,7 @@ public User get(Long id) {
 2. 동일 값이면 정상 종료
 3. 실제 변경 수행
 
-### 파일: `service/UserService.java`
+### 파일: `user/UserService.java`
 
 #### 적용 코드
 
@@ -142,7 +142,7 @@ public void changeNickname(Long id, UserNicknameChangeRequest req) {
 
 ### 2-2. 비밀번호 변경 (`changePassword`)
 
-### 파일: `service/UserService.java`
+### 파일: `user/UserService.java`
 
 #### 적용 코드
 
@@ -165,7 +165,7 @@ public void changePassword(Long id, UserPasswordChangeRequest req) {
 
 ### 2-3. 삭제 (`delete`)
 
-### 파일: `service/UserService.java`
+### 파일: `user/UserService.java`
 
 #### 적용 코드
 
