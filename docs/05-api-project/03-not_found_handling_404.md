@@ -29,36 +29,6 @@ Repository는 여전히 **DB 접근만 담당**하며,
 
 ---
 
-## 0. 준비
-
-### 파일: `common/error/ApiException`, `common/error/ErrorCode`
-
-#### 파일 역할
-
-* API 오류를 공통 형식으로 표현하기 위한 도메인 예외 타입을 제공한다.
-* `ErrorCode`를 통해 HTTP 상태/에러 코드를 표준화한다.
-* `GlobalExceptionHandler`에서 일관된 응답(`ApiResponse`)으로 변환된다.
-
-Service는 아래 예외 타입을 사용한다.
-
-```java
-import com.koreanit.spring.common.error.ApiException;
-import com.koreanit.spring.common.error.ErrorCode;
-```
-
-404 응답은 다음과 같이 표현한다.
-
-```java
-throw new ApiException(
-    ErrorCode.NOT_FOUND_RESOURCE,
-    "존재하지 않는 사용자입니다"
-);
-```
-
-`GlobalExceptionHandler`는 이미 `ApiException`을 처리하므로 **추가 매핑은 필요 없다.**
-
----
-
 ## 1. 단건 조회 결과 없음 (`queryForObject`)
 
 `JdbcTemplate.queryForObject()`는 조회 결과가 없으면 `EmptyResultDataAccessException`을 발생시킨다.

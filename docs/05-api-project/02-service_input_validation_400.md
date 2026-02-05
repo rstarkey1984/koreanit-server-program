@@ -76,13 +76,6 @@ implementation 'org.springframework.boot:spring-boot-starter-validation'
   → **빈 문자열과 미입력을 동일한 의미(null)로 일관되게 취급하기 위함**
 
 ```java
-package com.koreanit.spring.dto.request;
-
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
 public class UserCreateRequest {
 
     @NotBlank(message = "username은 필수입니다")
@@ -138,12 +131,6 @@ public class UserCreateRequest {
 * 인증 성공 여부 판단은 Service 또는 Security 계층에서 수행한다.
 
 ```java
-package com.koreanit.spring.dto.request;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
 public class UserLoginRequest {
 
     @NotBlank(message = "username은 필수입니다")
@@ -175,12 +162,6 @@ public class UserLoginRequest {
 * 비즈니스 규칙(암호화 등)은 포함하지 않는다.
 
 ```java
-package com.koreanit.spring.dto.request;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
 public class UserPasswordChangeRequest {
 
     @NotBlank(message = "password는 필수입니다")
@@ -201,16 +182,10 @@ public class UserPasswordChangeRequest {
 
 #### 파일 역할
 
-* 비밀번호 변경 요청 데이터를 전달한다.
-* 실제 암호화 및 저장은 Service 계층에서 수행된다.
+* 닉네임 변경 요청 데이터를 전달한다.
+* “저장/갱신은 Service→Repository 흐름에서 수행한다”
 
 ```java
-package com.koreanit.spring.dto.request;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
 public class UserNicknameChangeRequest {
 
     @NotBlank(message = "nickname은 필수입니다")
@@ -239,8 +214,6 @@ Controller는 요청 값 판단 실패 시 직접 처리하지 않으며,
 예외는 `GlobalExceptionHandler`로 전달된다.
 
 ```java
-import jakarta.validation.Valid;
-
 @PostMapping
 public ApiResponse<Long> create(@Valid @RequestBody UserCreateRequest req) {
     return ApiResponse.ok(userService.create(req));
@@ -277,10 +250,13 @@ Service는 다음을 전제로 동작한다.
 public Long create(UserCreateRequest req) {
     String username = req.getUsername().trim().toLowerCase();
     String nickname = req.getNickname().trim().toLowerCase();
-    String email = req.getEmail().trim().toLowerCase();
+    
+    String email = req.getEmail();
+    String normalizedEmail = (email == null) ? null : email.toLowerCase();
+
     String hash = passwordEncoder.encode(req.getPassword());
 
-    return userRepository.save(username, hash, nickname, email);
+    return userRepository.save(username, hash, nickname, normalizedEmail);
 }
 ```
 
@@ -377,10 +353,6 @@ Content-Type: application/json
 * 빈 문자열과 미입력을 동일하게 `null`로 정규화한다
 
 ```java
-package com.koreanit.spring.dto.request;
-
-import jakarta.validation.constraints.Email;
-
 public class UserEmailChangeRequest {
 
     @Email(message = "email 형식이 올바르지 않습니다")

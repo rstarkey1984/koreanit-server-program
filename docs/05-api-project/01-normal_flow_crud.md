@@ -110,13 +110,6 @@ com.koreanit.spring
 * 인증/인가 로직과는 무관한 **암호화 정책 선언**만을 담당한다.
 
 ```java
-package com.koreanit.spring.common.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 @Configuration
 public class SecurityBeansConfig {
 
@@ -146,8 +139,6 @@ DTO는 외부 요청/응답 계약만을 표현하며, 도메인 규칙이나 �
 * Domain 및 Repository 구조와 직접적인 연관을 갖지 않는다.
 
 ```java
-package com.koreanit.spring.dto.request;
-
 public class UserCreateRequest {
 
     private String username;
@@ -201,7 +192,7 @@ public class UserCreateRequest {
 * 인증 성공 여부 판단이나 세션 생성은 담당하지 않는다.
 
 ```java
-package com.koreanit.spring.dto.request;
+package com.koreanit.spring.user.dto.request;
 
 public class UserLoginRequest {
 
@@ -238,7 +229,7 @@ public class UserLoginRequest {
 * 실제 암호화 및 저장은 Service 계층에서 수행된다.
 
 ```java
-package com.koreanit.spring.dto.request;
+package com.koreanit.spring.user.dto.request;
 
 public class UserPasswordChangeRequest {
 
@@ -260,11 +251,11 @@ public class UserPasswordChangeRequest {
 
 #### 파일 역할
 
-* 비밀번호 변경 요청 데이터를 전달한다.
+* 닉네임 변경 요청 데이터를 전달한다.
 * 실제 암호화 및 저장은 Service 계층에서 수행된다.
 
 ```java
-package com.koreanit.spring.dto.request;
+package com.koreanit.spring.user.dto.request;
 
 public class UserNicknameChangeRequest {
     private String nickname;
@@ -293,11 +284,6 @@ Repository 계층은 **DB 접근 전담 계층**이며, 의미 해석을 수행�
 * 조회 결과에 대한 의미 해석(404/409 등)은 수행하지 않는다.
 
 ```java
-package com.koreanit.spring.repository;
-
-import java.util.List;
-import com.koreanit.spring.entity.UserEntity;
-
 public interface UserRepository {
 
     Long save(String username, String passwordHash, String nickname, String email);
@@ -329,22 +315,6 @@ public interface UserRepository {
 * DB 처리 결과에 대한 의미 판단은 수행하지 않는다.
 
 ```java
-// UserRepository의 JdbcTemplate 기반 구현체
-// SQL 실행과 ResultSet → Entity 매핑만 담당한다.
-package com.koreanit.spring.repository.impl;
-
-import com.koreanit.spring.entity.UserEntity;
-import com.koreanit.spring.repository.UserRepository;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.util.List;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Repository;
-
 @Repository
 public class JdbcUserRepository implements UserRepository {
 
@@ -468,18 +438,6 @@ public class JdbcUserRepository implements UserRepository {
 * 비밀번호 해시 생성 및 비교 같은 도메인 규칙을 적용한다.
 
 ```java
-package com.koreanit.spring.service;
-
-import com.koreanit.spring.domain.User;
-import com.koreanit.spring.dto.request.UserCreateRequest;
-import com.koreanit.spring.dto.request.UserPasswordChangeRequest;
-import com.koreanit.spring.entity.UserEntity;
-import com.koreanit.spring.mapper.UserMapper;
-import com.koreanit.spring.repository.UserRepository;
-import java.util.List;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 @Service
 public class UserService {
 
@@ -516,8 +474,7 @@ public class UserService {
   }
 
   public List<User> list(int limit) {
-    int safeLimit = normalizeLimit(limit);
-    return UserMapper.toDomainList(userRepository.findAll(safeLimit));
+    return UserMapper.toDomainList(userRepository.findAll(limit));
   }
 
   public void changeNickname(Long id, UserNicknameChangeRequest req) {
@@ -562,17 +519,6 @@ public class UserService {
 * 모든 응답을 `ApiResponse`로 통일한다.
 
 ```java
-package com.koreanit.spring.controller;
-
-import java.util.List;
-import org.springframework.web.bind.annotation.*;
-import com.koreanit.spring.common.response.ApiResponse;
-import com.koreanit.spring.dto.request.UserCreateRequest;
-import com.koreanit.spring.dto.request.UserPasswordChangeRequest;
-import com.koreanit.spring.dto.response.UserResponse;
-import com.koreanit.spring.mapper.UserMapper;
-import com.koreanit.spring.service.UserService;
-
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -631,16 +577,6 @@ public class UserController {
 * 인증 실패에 대한 의미 해석은 이후 단계에서 추가된다.
 
 ```java
-package com.koreanit.spring.controller;
-
-import org.springframework.web.bind.annotation.*;
-import com.koreanit.spring.common.response.ApiResponse;
-import com.koreanit.spring.dto.request.UserLoginRequest;
-import com.koreanit.spring.dto.response.UserResponse;
-import com.koreanit.spring.mapper.UserMapper;
-import com.koreanit.spring.service.UserService;
-import jakarta.servlet.http.HttpSession;
-
 @RestController
 @RequestMapping("/api")
 public class AuthController {
@@ -684,7 +620,7 @@ public class AuthController {
 @baseUrl = http://localhost:8080
 @json = application/json
 
-### 1) 회원가입
+### 회원가입
 POST {{baseUrl}}/api/users
 Content-Type: {{json}}
 
@@ -694,9 +630,8 @@ Content-Type: {{json}}
   "nickname": "관리자",
   "email": "admin@admin.com"
 }
-# 설명: 신규 유저를 생성하고 응답으로 userId를 받는다.
 
-### 2) 로그인(세션 생성)
+### 로그인(세션 생성)
 POST {{baseUrl}}/api/login
 Content-Type: {{json}}
 
@@ -705,37 +640,35 @@ Content-Type: {{json}}
   "password": "1234"
 }
 
-### 3) 내 정보 조회(/api/me)
+### 로그아웃(세션 삭제)
+POST {{baseUrl}}/api/logout
+
+### 내 정보 조회(/api/me)
 GET {{baseUrl}}/api/me
 
-### 4) 사용자 목록(limit)
+### 사용자 목록(limit)
 GET {{baseUrl}}/api/users?limit=10
 
-### 5) 사용자 단건 조회
+### 사용자 단건 조회
 GET {{baseUrl}}/api/users/1
 
-### 6) 닉네임 변경
+### 닉네임 변경
 PUT {{baseUrl}}/api/users/1/nickname
 Content-Type: {{json}}
 
 {
   "nickname": "nickname"
 }
-# 설명: id=1 사용자의 nickname을 변경한다.
 
-### 7) 비밀번호 변경
+### 비밀번호 변경
 PUT {{baseUrl}}/api/users/1/password
 Content-Type: {{json}}
 
 {
   "password": "newpassword"
 }
-# 설명: id=1 사용자의 password를 BCrypt 해시로 변경 저장한다.
 
-### 8) 로그아웃(세션 삭제)
-POST {{baseUrl}}/api/logout
-
-### 9) 사용자삭제
+### 사용자삭제
 DELETE {{baseUrl}}/api/users/1
 ```
 
@@ -767,10 +700,6 @@ DELETE {{baseUrl}}/api/users/1
 * 검증(@Email) 여부와 무관하게 **요청 계약 구조를 고정**하는 역할만 담당한다.
 
 ```java
-package com.koreanit.spring.dto.request;
-
-import jakarta.validation.constraints.Email;
-
 public class UserEmailChangeRequest {
 
     private String email;
@@ -780,7 +709,7 @@ public class UserEmailChangeRequest {
     }
 
     public void setEmail(String email) {
-        return email;
+        this.email = email;
     }
 }
 ```

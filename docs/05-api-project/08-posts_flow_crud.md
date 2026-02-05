@@ -348,9 +348,6 @@ public class PostController {
 ```
 @host = http://localhost:8080
 
-### 로그아웃(세션 삭제)
-POST {{host}}/api/logout
-
 ### 회원가입
 POST {{host}}/api/users
 Content-Type: application/json
@@ -370,6 +367,9 @@ Content-Type: application/json
   "username": "post_user1",
   "password": "pass1234!"
 }
+
+### 로그아웃(세션 삭제)
+POST {{host}}/api/logout
 
 ### 게시글 생성
 # 작성자(user_id)는 서버(SecurityContext)에서 결정된다고 가정

@@ -38,28 +38,14 @@ DUPLICATE_RESOURCE(HttpStatus.CONFLICT), // 409
 
 ---
 
-## 2. GlobalExceptionHandler 처리 흐름
-
-`ApiException`은 이미 전역 예외 처리기에 의해 공통 응답 형식으로 변환된다.
-본 단계에서는 **추가적인 예외 매핑을 정의하지 않는다.**
-
-```java
-@ExceptionHandler(ApiException.class)
-public ResponseEntity<ApiResponse<Void>> handleApiException(ApiException e) {
-    ...
-}
-```
-
----
-
-## 3. Service에서 DuplicateKeyException 해석
+## 2. Service에서 DuplicateKeyException 해석
 
 Repository는 여전히 **DB 접근만 담당**한다.
 중복 여부 판단과 의미 해석은 **Service의 책임**이다.
 
 ---
 
-### 3-1. 중복 메시지 변환 로직
+### 2-1. 중복 메시지 변환 로직
 
 파일: `user/UserService.java`
 
@@ -88,7 +74,7 @@ private String toDuplicateMessage(DuplicateKeyException e) {
 
 ---
 
-### 3-2. 회원가입(create) 중복 처리
+### 2-2. 회원가입(create) 중복 처리
 
 파일: `user/UserService.java`
 
@@ -103,7 +89,10 @@ private String toDuplicateMessage(DuplicateKeyException e) {
 public Long create(UserCreateRequest req) {
   String username = req.getUsername().trim().toLowerCase();
   String nickname = req.getNickname().trim().toLowerCase();
-  String email = req.getEmail().trim().toLowerCase();
+  
+  String email = req.getEmail();
+  String normalizedEmail = (email == null) ? null : email.toLowerCase();
+
   String hash = passwordEncoder.encode(req.getPassword());
 
   try {
@@ -121,7 +110,7 @@ public Long create(UserCreateRequest req) {
 
 ---
 
-## 4. 테스트
+## 3. 테스트
 
 파일: `409.http`
 

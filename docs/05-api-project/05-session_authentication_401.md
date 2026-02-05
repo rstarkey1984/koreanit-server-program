@@ -246,7 +246,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.koreanit.spring.common.error.ErrorCode;
 import com.koreanit.spring.common.response.ApiResponse;
-import com.koreanit.spring.repository.UserRepository;
+import com.koreanit.spring.user.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
@@ -276,23 +276,30 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http,
-                                        SessionAuthenticationFilter sessionFilter) throws Exception {
+      SessionAuthenticationFilter sessionFilter) throws Exception {
 
     http
+        // 기본 로그인 폼 비활성화
         .formLogin(f -> f.disable())
+
+        // HTTP Basic 인증 비활성화
         .httpBasic(b -> b.disable())
 
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-
+        // CSRF 보호 비활성화 (JSON API 기준)
         .csrf(csrf -> csrf.disable())
 
+        // 인증/인가 실패 시 JSON 응답 처리
         .exceptionHandling(e -> e
+
+            // 미인증 접근 시 401 응답
             .authenticationEntryPoint((req, res, ex) -> {
               writeJson(
                   res,
                   ErrorCode.UNAUTHORIZED.getStatus().value(),
                   ApiResponse.fail(ErrorCode.UNAUTHORIZED.name(), "로그인이 필요합니다"));
             })
+
+            // 권한 없는 접근 시 403 응답
             .accessDeniedHandler((req, res, ex) -> {
               writeJson(
                   res,
@@ -300,24 +307,44 @@ public class SecurityConfig {
                   ApiResponse.fail(ErrorCode.FORBIDDEN.name(), "권한이 없습니다"));
             }))
 
+        // 요청 경로별 접근 권한 설정
         .authorizeHttpRequests(auth -> auth
+            // CORS preflight 요청 허용
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+            // 회원 가입 허용
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+
+            // 로그인 요청 허용
             .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
+
+            // API 경로는 인증 필요
             .requestMatchers("/api/**").authenticated()
+
+            // 그 외 요청은 모두 허용
             .anyRequest().permitAll())
 
+        // 로그아웃 처리 설정
         .logout(lo -> lo
+            // 로그아웃 URL 지정
             .logoutUrl("/api/logout")
+
+            // 세션 무효화
             .invalidateHttpSession(true)
+
+            // 세션 쿠키 삭제
             .deleteCookies("JSESSIONID")
+
+            // 로그아웃 성공 시 JSON 응답
             .logoutSuccessHandler((req, res, auth) -> {
               writeJson(res, 200, ApiResponse.ok(null));
             }))
 
+        // 세션 기반 인증 필터 등록
         .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
+
   }
 }
 ```

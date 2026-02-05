@@ -172,7 +172,10 @@ public class JdbcUserRoleRepository implements UserRoleRepository {
 public Long create(UserCreateRequest req) {
   String username = req.getUsername().trim().toLowerCase();
   String nickname = req.getNickname().trim().toLowerCase();
-  String email = req.getEmail().trim().toLowerCase();
+
+  String email = req.getEmail();
+  String normalizedEmail = (email == null) ? null : email.toLowerCase();
+  
   String hash = passwordEncoder.encode(req.getPassword());
 
   try {
@@ -681,7 +684,6 @@ Client
 
 ```java
 @PreAuthorize("hasRole('ADMIN') or #id == ...")
-@PreAuthorize("hasRole('ADMIN') and isAuthenticated()")
 ```
 
 * `and`, `or`, `not` 사용 가능
