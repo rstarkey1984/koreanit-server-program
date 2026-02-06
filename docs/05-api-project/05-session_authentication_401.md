@@ -141,11 +141,9 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
   public static final String SESSION_USER_ID = "LOGIN_USER_ID";
 
   private final UserRepository userRepository;
-  private final UserRoleRepository userRoleRepository;
 
-  public SessionAuthenticationFilter(UserRepository userRepository, UserRoleRepository userRoleRepository) {
+  public SessionAuthenticationFilter(UserRepository userRepository) {
     this.userRepository = userRepository;
-    this.userRoleRepository = userRoleRepository;
   }
 
   private boolean needsAuthInjection(Authentication a) {
@@ -154,18 +152,8 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
 
   private List<SimpleGrantedAuthority> resolveAuthorities(Long userId) {
 
-    List<String> roles = userRoleRepository.findRolesByUserId(userId);
-
     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
     boolean hasUserRole = false;
-
-    // DB에서 조회한 Role 변환
-    for (String role : roles) {
-      if ("ROLE_USER".equals(role)) {
-        hasUserRole = true;
-      }
-      authorities.add(new SimpleGrantedAuthority(role));
-    }
 
     // 방어적 기본값: ROLE_USER 보장
     if (!hasUserRole) {
@@ -195,21 +183,23 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
         Object v = session.getAttribute(SESSION_USER_ID);
 
         if (v instanceof Long userId) {
+          try {
+            UserEntity user = userRepository.findById(userId);
 
-          UserEntity user = userRepository.findById(userId);
+            LoginUser principal = new LoginUser(
+                user.getId(), user.getUsername(), user.getNickname());
 
-          LoginUser principal = new LoginUser(
-              user.getId(),
-              user.getUsername(),
-              user.getNickname());
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                principal, null, resolveAuthorities(userId));
 
-          Authentication auth = new UsernamePasswordAuthenticationToken(
-              principal,
-              null,
-              resolveAuthorities(userId));
+            context.setAuthentication(auth);
 
-          // 3. Authentication을 SecurityContext에 주입
-          context.setAuthentication(auth);
+          } catch (EmptyResultDataAccessException e) {
+            // 세션에 쓰레기 userId가 남은 케이스: 로그인 해제 처리
+            session.removeAttribute(SESSION_USER_ID);
+            // 또는 session.invalidate();
+            // 인증 주입 안 하고 익명으로 통과
+          }
         }
       }
     }
@@ -318,27 +308,14 @@ public class SecurityConfig {
             // 로그인 요청 허용
             .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
 
+            // 로그아웃 요청 허용
+            .requestMatchers(HttpMethod.POST, "/api/logout").permitAll()
+
             // API 경로는 인증 필요
             .requestMatchers("/api/**").authenticated()
 
             // 그 외 요청은 모두 허용
             .anyRequest().permitAll())
-
-        // 로그아웃 처리 설정
-        .logout(lo -> lo
-            // 로그아웃 URL 지정
-            .logoutUrl("/api/logout")
-
-            // 세션 무효화
-            .invalidateHttpSession(true)
-
-            // 세션 쿠키 삭제
-            .deleteCookies("JSESSIONID")
-
-            // 로그아웃 성공 시 JSON 응답
-            .logoutSuccessHandler((req, res, auth) -> {
-              writeJson(res, 200, ApiResponse.ok(null));
-            }))
 
         // 세션 기반 인증 필터 등록
         .addFilterBefore(sessionFilter, UsernamePasswordAuthenticationFilter.class);
