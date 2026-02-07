@@ -15,13 +15,13 @@
 
 ## 1. 엔드포인트
 
-| Method | Path                | 역할             |
-| ------ | ------------------- | -------------- |
-| POST   | /api/posts          | 게시글 생성         |
+| Method | Path                | 역할                     |
+| ------ | ------------------- | ------------------------ |
+| POST   | /api/posts          | 게시글 생성              |
 | GET    | /api/posts?limit=20 | 게시글 목록 조회(최신순) |
-| GET    | /api/posts/{id}     | 게시글 단건 조회      |
-| PUT    | /api/posts/{id}     | 게시글 수정         |
-| DELETE | /api/posts/{id}     | 게시글 삭제         |
+| GET    | /api/posts/{id}     | 게시글 단건 조회         |
+| PUT    | /api/posts/{id}     | 게시글 수정              |
+| DELETE | /api/posts/{id}     | 게시글 삭제              |
 
 응답은 전부 `ApiResponse`로 통일한다.
 
@@ -29,7 +29,7 @@
 
 `SecurityConfig.java`
 ```java
-// 게시글목록/단건조회 오픈
+// 게시글목록/단건조회 허용
 .requestMatchers(HttpMethod.GET, "/api/posts").permitAll()
 .requestMatchers(HttpMethod.GET, "/api/posts/{id}").permitAll()
 ```
@@ -113,6 +113,10 @@ public interface PostRepository {
     PostEntity findById(long id);
     int update(long id, String title, String content);
     int delete(long id);
+    int increaseViewCount(long id);
+    boolean isOwner(long postId, long userId);
+    int increaseCommentsCnt(long postId);
+    int decreaseCommentsCnt(long postId);
 }
 ```
 
@@ -142,75 +146,133 @@ import java.util.List;
 @Repository
 public class JdbcPostRepository implements PostRepository {
 
-    private final JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
 
-    public JdbcPostRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+  public JdbcPostRepository(JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+  }
+
+  private final RowMapper<PostEntity> rowMapper = (rs, rowNum) -> {
+    PostEntity e = new PostEntity();
+    e.setId(rs.getLong("id"));
+    e.setUserId(rs.getLong("user_id"));
+    e.setTitle(rs.getString("title"));
+    e.setContent(rs.getString("content"));
+    e.setViewCount(rs.getInt("view_count"));
+    e.setCommentsCnt(rs.getInt("comments_cnt"));
+    e.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+    if (rs.getTimestamp("updated_at") != null) {
+      e.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
     }
+    return e;
+  };
 
-    private final RowMapper<PostEntity> rowMapper = (rs, rowNum) -> {
-        PostEntity e = new PostEntity();
-        e.setId(rs.getLong("id"));
-        e.setUserId(rs.getLong("user_id"));
-        e.setTitle(rs.getString("title"));
-        e.setContent(rs.getString("content"));
-        e.setViewCount(rs.getInt("view_count"));
-        e.setCommentsCnt(rs.getInt("comments_cnt"));
-        e.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-        if (rs.getTimestamp("updated_at") != null) {
-            e.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
-        }
-        return e;
-    };
+  @Override
+  public long save(long userId, String title, String content) {
+    String sql = "INSERT INTO posts(user_id, title, content) VALUES (?, ?, ?)";
+    KeyHolder keyHolder = new GeneratedKeyHolder();
 
-    @Override
-    public long save(long userId, String title, String content) {
-        String sql = "INSERT INTO posts(user_id, title, content) VALUES (?, ?, ?)";
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+    jdbcTemplate.update(con -> {
+      PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+      ps.setLong(1, userId);
+      ps.setString(2, title);
+      ps.setString(3, content);
+      return ps;
+    }, keyHolder);
 
-        jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setLong(1, userId);
-            ps.setString(2, title);
-            ps.setString(3, content);
-            return ps;
-        }, keyHolder);
+    return keyHolder.getKey().longValue();
+  }
 
-        return keyHolder.getKey().longValue();
-    }
+  @Override
+  public List<PostEntity> findAll(int offset, int limit) {
+    String sql = """
+        SELECT id, user_id, title, content, view_count, comments_cnt, created_at, updated_at
+        FROM posts
+        ORDER BY id DESC
+        LIMIT ? OFFSET ?
+        """;
+    return jdbcTemplate.query(sql, rowMapper, limit, offset);
+  }
 
-    @Override
-    public List<PostEntity> findAll(int limit) {
-        String sql = """
-                SELECT id, user_id, title, content, view_count, comments_cnt, created_at, updated_at
-                FROM posts
-                ORDER BY created_at DESC
-                LIMIT ?
-                """;
-        return jdbcTemplate.query(sql, rowMapper, limit);
-    }
+  @Override
+  public long countAll() {
+    String sql = "SELECT COUNT(*) FROM posts";
+    Long cnt = jdbcTemplate.queryForObject(sql, Long.class);
+    return cnt == null ? 0 : cnt;
+  }
 
-    @Override
-    public PostEntity findById(long id) {
-        String sql = """
-                SELECT id, user_id, title, content, view_count, comments_cnt, created_at, updated_at
-                FROM posts
-                WHERE id = ?
-                """;
-        return jdbcTemplate.queryForObject(sql, rowMapper, id);
-    }
+  @Override
+  public PostEntity findById(long id) {
+    String sql = """
+        SELECT id, user_id, title, content, view_count, comments_cnt, created_at, updated_at
+        FROM posts
+        WHERE id = ?
+        """;
+    return jdbcTemplate.queryForObject(sql, rowMapper, id);
+  }
 
-    @Override
-    public int update(long id, String title, String content) {
-        String sql = "UPDATE posts SET title = ?, content = ? WHERE id = ?";
-        return jdbcTemplate.update(sql, title, content, id);
-    }
+  @Override
+  public int update(long id, String title, String content) {
+    String sql = "UPDATE posts SET title = ?, content = ? WHERE id = ?";
+    return jdbcTemplate.update(sql, title, content, id);
+  }
 
-    @Override
-    public int delete(long id) {
-        String sql = "DELETE FROM posts WHERE id = ?";
-        return jdbcTemplate.update(sql, id);
-    }
+  @Override
+  public int delete(long id) {
+    String sql = "DELETE FROM posts WHERE id = ?";
+    return jdbcTemplate.update(sql, id);
+  }
+
+  @Override
+  public int increaseViewCount(long id) {
+    String sql = """
+            UPDATE posts
+            SET view_count = view_count + 1
+            WHERE id = ?
+        """;
+    return jdbcTemplate.update(sql, id);
+  }
+
+  @Override
+  public boolean isOwner(long postId, long userId) {
+    String sql = """
+            SELECT 1
+            FROM posts
+            WHERE id = ? AND user_id = ?
+            LIMIT 1
+        """;
+
+    Integer found = jdbcTemplate.query(
+        sql,
+        rs -> rs.next() ? 1 : null,
+        postId,
+        userId);
+
+    return found != null;
+  }
+
+  @Override
+  public int increaseCommentsCnt(long postId) {
+    String sql = """
+            UPDATE posts
+            SET comments_cnt = comments_cnt + 1
+            WHERE id = ?
+        """;
+    return jdbcTemplate.update(sql, postId);
+  }
+
+  @Override
+  public int decreaseCommentsCnt(long postId) {
+    String sql = """
+            UPDATE posts
+            SET comments_cnt = CASE
+                WHEN comments_cnt > 0 THEN comments_cnt - 1
+                ELSE 0
+            END
+            WHERE id = ?
+        """;
+    return jdbcTemplate.update(sql, postId);
+  }
 }
 ```
 
@@ -227,8 +289,6 @@ public class JdbcPostRepository implements PostRepository {
 ```java
 package com.koreanit.spring.post;
 
-import com.koreanit.spring.post.dto.request.PostCreateRequest;
-import com.koreanit.spring.post.dto.request.PostUpdateRequest;
 import com.koreanit.spring.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 
@@ -237,28 +297,49 @@ import java.util.List;
 @Service
 public class PostService {
 
+    private static final int MAX_LIMIT = 1000;
+
     private final PostRepository postRepository;
 
     public PostService(PostRepository postRepository) {
         this.postRepository = postRepository;
     }
 
-    public Post create(PostCreateRequest req) {
-        long userId = SecurityUtils.currentUserId(); // 정상 로그인 가정
-        long id = postRepository.save(userId, req.getTitle(), req.getContent());
+    private int normalizeLimit(int limit) {
+    if (limit <= 0) {
+      throw new ApiException(ErrorCode.INVALID_REQUEST, "limit 값이 유효하지 않습니다");
+    }
+      return Math.min(limit, MAX_LIMIT);
+    }
+
+    private int normalizePage(int page) {
+      if (page <= 0) {
+        throw new ApiException(ErrorCode.INVALID_REQUEST, "page 값이 유효하지 않습니다");
+      }
+      return page;
+    }
+
+    public Post create(long userId, String title, String content) {
+        long id = postRepository.save(userId, title, content);
         return PostMapper.toDomain(postRepository.findById(id));
     }
 
-    public List<Post> list(int limit) {
-        return PostMapper.toDomainList(postRepository.findAll(limit));
+    public List<Post> list(int page, int limit) {
+
+      page = normalizePage(page);
+      limit = normalizeLimit(limit);
+
+      int offset = (page - 1) * limit;
+
+      return PostMapper.toDomainList(postRepository.findAll(offset, normalizeLimit(limit)));
     }
 
     public Post get(long id) {
         return PostMapper.toDomain(postRepository.findById(id));
     }
 
-    public Post update(long id, PostUpdateRequest req) {
-        postRepository.update(id, req.getTitle(), req.getContent());
+    public Post update(long id, String title, String content) {
+        postRepository.update(id, title, content);
         return PostMapper.toDomain(postRepository.findById(id));
     }
 
@@ -286,6 +367,8 @@ import com.koreanit.spring.common.response.ApiResponse;
 import com.koreanit.spring.post.dto.request.PostCreateRequest;
 import com.koreanit.spring.post.dto.request.PostUpdateRequest;
 import com.koreanit.spring.post.dto.response.PostResponse;
+import com.koreanit.spring.security.SecurityUtils;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -294,41 +377,44 @@ import java.util.List;
 @RequestMapping("/api/posts")
 public class PostController {
 
-    private final PostService postService;
+  private final PostService postService;
 
-    public PostController(PostService postService) {
-        this.postService = postService;
-    }
+  public PostController(PostService postService) {
+      this.postService = postService;
+  }
 
-    @PostMapping
-    public ApiResponse<PostResponse> create(@RequestBody PostCreateRequest req) {
-        Post p = postService.create(req);
-        return ApiResponse.ok(PostMapper.toResponse(p));
-    }
+  @PostMapping
+  public ApiResponse<PostResponse> create(@RequestBody PostCreateRequest req) {
+      Long userId = SecurityUtils.currentUserId();
+      Post p = postService.create(userId, req.getTitle(), req.getContent());
+      return ApiResponse.ok(PostMapper.toResponse(p));
+  }
 
-    @GetMapping
-    public ApiResponse<List<PostResponse>> list(@RequestParam(defaultValue = "20") int limit) {
-        List<Post> posts = postService.list(limit);
-        return ApiResponse.ok(PostMapper.toResponseList(posts));
-    }
+  @GetMapping
+  public ApiResponse<List<PostResponse>> list(
+      @RequestParam(defaultValue = "1") int page,
+      @RequestParam(defaultValue = "20") int limit) {
+    List<Post> posts = postService.list(page, limit);
+    return ApiResponse.ok(PostMapper.toResponseList(posts));
+  }
 
-    @GetMapping("/{id}")
-    public ApiResponse<PostResponse> get(@PathVariable long id) {
-        Post p = postService.get(id);
-        return ApiResponse.ok(PostMapper.toResponse(p));
-    }
+  @GetMapping("/{id}")
+  public ApiResponse<PostResponse> get(@PathVariable long id) {
+      Post p = postService.get(id);
+      return ApiResponse.ok(PostMapper.toResponse(p));
+  }
 
-    @PutMapping("/{id}")
-    public ApiResponse<PostResponse> update(@PathVariable long id, @RequestBody PostUpdateRequest req) {
-        Post p = postService.update(id, req);
-        return ApiResponse.ok(PostMapper.toResponse(p));
-    }
+  @PutMapping("/{id}")
+  public ApiResponse<PostResponse> update(@PathVariable long id, @RequestBody PostUpdateRequest req) {
+      Post p = postService.update(id, req.getTitle(), req.getContent());
+      return ApiResponse.ok(PostMapper.toResponse(p));
+  }
 
-    @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable long id) {
-        postService.delete(id);
-        return ApiResponse.ok(null);
-    }
+  @DeleteMapping("/{id}")
+  public ApiResponse<Void> delete(@PathVariable long id) {
+      postService.delete(id);
+      return ApiResponse.ok();
+  }
 }
 ```
 
@@ -348,15 +434,18 @@ public class PostController {
 ```
 @host = http://localhost:8080
 
-### 회원가입
+### 로그아웃(세션 삭제)
+POST {{host}}/api/logout
+
+### 회원가입 (정상)
 POST {{host}}/api/users
 Content-Type: application/json
 
 {
-  "username": "post_user1",
-  "password": "pass1234!",
+  "username": "test",
+  "password": "1234",
   "nickname": "게시글작성자",
-  "email": "post_user1@example.com"
+  "email": "test@example.com"
 }
 
 ### 로그인 - 세션 쿠키 발급
@@ -364,16 +453,11 @@ POST {{host}}/api/login
 Content-Type: application/json
 
 {
-  "username": "post_user1",
-  "password": "pass1234!"
+  "username": "test",
+  "password": "1234"
 }
 
-### 로그아웃(세션 삭제)
-POST {{host}}/api/logout
-
 ### 게시글 생성
-# 작성자(user_id)는 서버(SecurityContext)에서 결정된다고 가정
-# @name createPost
 POST {{host}}/api/posts
 Content-Type: application/json
 
@@ -383,17 +467,17 @@ Content-Type: application/json
 }
 
 ### 게시글 단건 조회
-GET {{host}}/api/posts/1
+GET {{host}}/api/posts/100
 
 ### 게시글 목록 조회
-GET {{host}}/api/posts?limit=20
+GET {{host}}/api/posts?page=1&limit=20
 
 ### 게시글 수정
-PUT {{host}}/api/posts/1
+PUT {{host}}/api/posts/100
 Content-Type: application/json
 
 {
-  "title": "수정된 제목",
+  "title": "수정된 제목1",
   "content": "수정된 내용"
 }
 

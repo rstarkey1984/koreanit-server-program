@@ -453,37 +453,39 @@ public class UserService {
 
   private int normalizeLimit(int limit) {
     if (limit <= 0) {
-      throw new IllegalArgumentException("limit 은 1 이상 입력해주세요");
+      throw new ApiException(ErrorCode.INVALID_REQUEST, "limit 값이 유효하지 않습니다");
     }
     return Math.min(limit, MAX_LIMIT);
   }
 
-  public Long create(UserCreateRequest req) {
-    String hash = passwordEncoder.encode(req.getPassword());
+  public Long create(String username, String password, String nickname, String email) {
+    String hash = passwordEncoder.encode(password);
 
     return userRepository.save(
-        req.getUsername(),
+        username,
         hash,
-        req.getNickname(),
-        req.getEmail());
+        nickname,
+        email
+    );
   }
 
   public User get(Long id) {
-    UserEntity e = userRepository.findById(id);
+    int safeLimit = normalizeLimit(id);
+    UserEntity e = userRepository.findById(safeLimit);
     return UserMapper.toDomain(e);
   }
 
   public List<User> list(int limit) {
-    return UserMapper.toDomainList(userRepository.findAll(limit));
+    int safeLimit = normalizeLimit(limit);
+    return UserMapper.toDomainList(userRepository.findAll(safeLimit));
   }
 
-  public void changeNickname(Long id, UserNicknameChangeRequest req) {
-    String nickname = req.getNickname();
+  public void changeNickname(Long id, String nickname) {
     userRepository.updateNickname(id, nickname);
   }
 
-  public void changePassword(Long id, UserPasswordChangeRequest req) {
-    String hash = passwordEncoder.encode(req.getPassword());
+  public void changePassword(Long id, String password) {
+    String hash = passwordEncoder.encode(password);
     userRepository.updatePassword(id, hash);
   }
 
@@ -523,44 +525,50 @@ public class UserService {
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserService userService;
+  private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+  public UserController(UserService userService) {
+    this.userService = userService;
+  }
 
-    @PostMapping
-    public ApiResponse<Long> create(@RequestBody UserCreateRequest req) {
-        return ApiResponse.ok(userService.create(req));
-    }
+  @PostMapping
+  public ApiResponse<Long> create(@RequestBody UserCreateRequest req) {
+    Long id = userService.create(
+        req.getUsername(),
+        req.getPassword(),
+        req.getNickname(),
+        req.getEmail()
+    );
+    return ApiResponse.ok(id);
+  }
 
-    @GetMapping("/{id}")
-    public ApiResponse<UserResponse> get(@PathVariable Long id) {
-        return ApiResponse.ok(UserMapper.toResponse(userService.get(id)));
-    }
+  @GetMapping("/{id}")
+  public ApiResponse<UserResponse> get(@PathVariable Long id) {
+    return ApiResponse.ok(UserMapper.toResponse(userService.get(id)));
+  }
 
-    @GetMapping
-    public ApiResponse<List<UserResponse>> list(@RequestParam(defaultValue = "1000") int limit) {
-        return ApiResponse.ok(UserMapper.toResponseList(userService.list(limit)));
-    }
+  @GetMapping
+  public ApiResponse<List<UserResponse>> list(@RequestParam(defaultValue = "20") int limit) {
+    return ApiResponse.ok(UserMapper.toResponseList(userService.list(limit)));
+  }
 
-    @PutMapping("/{id}/nickname")
-    public ApiResponse<Void> changeNickname(@PathVariable Long id, @RequestBody UserNicknameChangeRequest req) {
-        userService.changeNickname(id, req);
-        return ApiResponse.ok();
-    }
+  @PutMapping("/{id}/nickname")
+  public ApiResponse<Void> changeNickname(@PathVariable Long id, @RequestBody UserNicknameChangeRequest req) {
+    userService.changeNickname(id, req.getNickname());
+    return ApiResponse.ok();
+  }
 
-    @PutMapping("/{id}/password")
-    public ApiResponse<Void> changePassword(@PathVariable Long id, @RequestBody UserPasswordChangeRequest req) {
-        userService.changePassword(id, req);
-        return ApiResponse.ok();
-    }
+  @PutMapping("/{id}/password")
+  public ApiResponse<Void> changePassword(@PathVariable Long id, @RequestBody UserPasswordChangeRequest req) {
+    userService.changePassword(id, req.getPassword());
+    return ApiResponse.ok();
+  }
 
-    @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
-        userService.delete(id);
-        return ApiResponse.ok();
-    }
+  @DeleteMapping("/{id}")
+  public ApiResponse<Void> delete(@PathVariable Long id) {
+    userService.delete(id);
+    return ApiResponse.ok();
+  }
 }
 ```
 
@@ -723,7 +731,6 @@ public class UserEmailChangeRequest {
 ### 파일 역할
 
 * 이메일 변경에 대한 **HTTP API 엔드포인트**를 추가한다.
-* 요청 DTO를 Service로 전달하고, 결과를 `ApiResponse`로 감싼다.
 * 비즈니스 판단이나 DB 처리 로직은 포함하지 않는다.
 
 ```java
@@ -732,7 +739,7 @@ public ApiResponse<Void> changeEmail(
         @PathVariable Long id,
         @RequestBody UserEmailChangeRequest req
 ) {
-    userService.changeEmail(id, req);
+    userService.changeEmail(id, req.getEmail());
     return ApiResponse.ok();
 }
 ```
@@ -746,12 +753,10 @@ public ApiResponse<Void> changeEmail(
 ### 파일 역할
 
 * Users 도메인에서 “이메일 변경”이라는 **비즈니스 동작**을 수행한다.
-* 요청 DTO에서 필요한 값만 추출하여 Repository에 전달한다.
 * 정상 흐름 기준으로 처리하며, 실패 의미 해석은 포함하지 않는다.
 
 ```java
-public void changeEmail(Long id, UserEmailChangeRequest req) {
-    String email = req.getEmail();
+public void changeEmail(Long id, String email) {
     userRepository.updateEmail(id, email);
 }
 ```

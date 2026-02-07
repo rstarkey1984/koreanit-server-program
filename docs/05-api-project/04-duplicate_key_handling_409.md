@@ -86,17 +86,15 @@ private String toDuplicateMessage(DuplicateKeyException e) {
 
 ```java
 // 정상 흐름: 회원가입 → PK 반환
-public Long create(UserCreateRequest req) {
-  String username = req.getUsername().trim().toLowerCase();
-  String nickname = req.getNickname().trim().toLowerCase();
-  
-  String email = req.getEmail();
-  String normalizedEmail = (email == null) ? null : email.toLowerCase();
+public Long create(String username, String password, String nickname, String email) {
+  username = username.trim().toLowerCase();
+  nickname = nickname.trim().toLowerCase();
+  normalizedEmail = (email == null) ? null : email.toLowerCase();
 
-  String hash = passwordEncoder.encode(req.getPassword());
+  String hash = passwordEncoder.encode(password);
 
   try {
-    return userRepository.save(username, hash, nickname, email);
+    return userRepository.save(username, hash, nickname, normalizedEmail);
   } catch (DuplicateKeyException e) {
     throw new ApiException(
         ErrorCode.DUPLICATE_RESOURCE,

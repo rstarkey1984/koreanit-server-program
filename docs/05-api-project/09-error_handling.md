@@ -1,196 +1,86 @@
-# Posts API 에러 핸들링 + 조회수 증가 (@Transactional)
+# Posts API 정규화 및 에러 핸들링 + 조회수 증가 (@Transactional)
 
 본 실습은 **Posts API 정상 흐름(baseline)** 위에
-실패 처리(400/404/401/403)와 조회수 증가 로직을 **의미 해석 기준에 맞게 추가**한다.
+실패 처리(400/404/403)와 조회수 증가 로직을 **의미 해석 기준에 맞게 추가**한다.
 
-> 409(중복)는 Posts 도메인에서 핵심 실패 의미가 아니므로 본 실습 범위에서 제외한다.
+> **401(인증)** 단계는 이미 적용되어 있어서 본 실습 범위에서 제외한다.    
+> **409(중복)** 는 Posts 도메인에서 핵심 실패 의미가 아니라서 제외한다.   
 
 ---
 
-## 1. 실습 목표
+## 실습 목표
 
 ### 실패 의미 해석 위치 고정
 
-| HTTP 상태 | 실패 의미 | 해석 위치                          | 응답 변환                             |
-| ------- | ----- | ------------------------------ | --------------------------------- |
-| 400     | 입력 오류 | Request DTO + Validation       | GlobalExceptionHandler            |
-| 404     | 대상 없음 | Service                        | GlobalExceptionHandler            |
-| 401     | 인증 실패 | Security(Filter / EntryPoint)  | Security Handler                  |
-| 403     | 인가 실패 | Method Security(@PreAuthorize) + Service | GlobalExceptionHandler |
+| HTTP 상태 | 실패 의미 | 해석 위치                                | 응답 변환              |
+| --------- | --------- | ---------------------------------------- | ---------------------- |
+| 400       | 입력 오류 | Request DTO + Validation                 | GlobalExceptionHandler |
+| 404       | 대상 없음 | Service                                  | GlobalExceptionHandler |
+| 403       | 인가 실패 | Method Security(@PreAuthorize) | accessDeniedHandler |
 
 ---
 
-## 2. 실습 구성
+## 실습 01 — DTO 입력 검증 (400)
 
-본 실습은 아래 **5단계**로 구성된다.
-
-* 실습 01 — 입력 검증 (400)
-* 실습 02 — 대상 없음 해석 (404)
-* 실습 03 — 인증 실패 (401)
-* 실습 04 — 인가 실패 (403)
-* 실습 05 — 조회수 증가 + @Transactional
-
-각 실습은 **독립적으로 구현 및 테스트 가능**해야 한다.
-
----
-
-## 실습 01 — 입력 검증 (400)
-
-### 목표
-
-다음 API에서 요청 값 검증을 수행한다.
-
-* `POST /api/posts`
-* `PUT /api/posts/{id}`
-
-검증 규칙
-
-* `title`
-
-  * 필수
-  * 길이 1 ~ 200
-* `content`
-
-  * 필수
-  * 길이 1 이상
-
-검증 실패 시
-
-* HTTP 400
-* `ApiResponse.fail(...)` 형식으로 응답
-
-### 구현 TODO
-
-* `PostCreateRequest`, `PostUpdateRequest`
-
-  * Bean Validation 애너테이션 추가
-* `PostController`
-
-  * `@RequestBody @Valid` 적용
-
-### 체크 포인트
-
-* title: null / 빈 문자열 / 200자 초과
-* content: null / 빈 문자열
-
----
-
-## 실습 02 — 대상 없음 해석 (404)
-
-### 목표
-
-존재하지 않는 게시글 id로 다음 작업 수행 시
-**404 (NOT_FOUND_RESOURCE)** 로 해석된다.
-
-* 단건 조회
-* 수정
-* 삭제
-* 조회수 증가 포함 단건 조회
-
-### 구현 TODO
-
-* Repository는 그대로 유지
-
-  * `PostEntity findById(long id)`
-* Service에서 의미 해석 수행
-
-Service 규칙
+### PostCreateRequest / PostUpdateRequest (추가)
 
 ```java
-throw new ApiException(
-    ErrorCode.NOT_FOUND_RESOURCE,
-    "존재하지 않는 게시글입니다. id=" + id
-);
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 ```
 
-포인트
+검증 규칙 추가
+```java
+@NotBlank(message = "title은 필수입니다")
+@Size(max = 200, message = "title은 200자 이하여야 합니다")
+private String title;
 
-* DB 예외(EmptyResultDataAccessException)는 **Service에서 HTTP 의미(404)로 변환**한다.
+@NotBlank(message = "content는 필수입니다")
+private String content;
+```
 
----
+### PostController (수정)
+```java
+import jakarta.validation.Valid;
+```
 
-## 실습 03 — 인증 실패 (401)
+각 메서드 파라미터(DTO)에 `@Valid` 추가
+```java
+@PostMapping
+public ApiResponse<Long> create(@RequestBody @Valid PostCreateRequest req)
 
-### 목표
-
-* 로그인하지 않은 상태에서 `/api/posts/**` 접근 시 401
-* 응답은 JSON(ApiResponse) 형식 유지
-
-### 구현 TODO
-
-* Users 단계에서 구성한 Security 설정 그대로 사용
-* 접근 규칙 점검
-
-허용
-
-* `POST /api/login`
-* `POST /api/users`
-
-차단
-
-* 그 외 `/api/**`
-
-### 체크 포인트
-
-* 세션/쿠키 없는 상태에서 Posts API 호출 → 401
+@PutMapping("/{id}")
+public ApiResponse<Void> update(
+    @PathVariable long id,
+    @RequestBody @Valid PostUpdateRequest req
+)
+```
 
 ---
 
-## 실습 04 — 인가 실패 (403)
+## 실습 02 — 게시글작성: 정규화
 
-### 목표
-
-게시글 수정/삭제 권한 규칙
-
-* 관리자
-
-  * 모든 게시글 수정/삭제 가능
-* 일반 사용자
-
-  * 본인 게시글만 수정/삭제 가능
-
-권한 위반 시 **403 (FORBIDDEN)**
-
-### 구현 TODO
-
-* `PostService.update`
-* `PostService.delete`
-
-위 메서드에 `@PreAuthorize` 적용
-
-권장 방식(학습용)
+### PostService (수정)
 
 ```java
-@PreAuthorize("hasRole('ADMIN') or @postAuthorization.isOwner(#id)")
-public void update(long id, PostUpdateRequest req) { ... }
+public Post create(long userId, String title, String content) {
+  title = title.trim(); // 제목 앞뒤 공백 제거(정규화)
+  long id = postRepository.save(userId, title, content);
+  return PostMapper.toDomain(postRepository.findById(id));
+}
 ```
-
-`isOwner(id)` 내부 로직
-
-* 현재 로그인 사용자 id 조회
-* 게시글의 `user_id`와 비교
-
-### 체크 포인트
-
-* 본인 글 수정/삭제 → 성공
-* 타인 글 수정/삭제 → 403
-* 관리자 → 타인 글 수정/삭제 성공
 
 ---
 
-## 실습 05 — 조회수 증가 + @Transactional
+## 실습 03 — 게시글조회: 조회수 증가 + 트랜잭션 + 404(대상 없음)
 
-### 목표
-
-* `GET /api/posts/{id}` 호출 시 `view_count` 1 증가
-* 증가(update)와 재조회(select)를 **하나의 트랜잭션**으로 처리
-
-### Repository 변경
+### PostRepository (추가)
 
 ```java
 int increaseViewCount(long id);
 ```
 
+### JdbcPostRepository (추가)
 ```java
 @Override
 public int increaseViewCount(long id) {
@@ -203,13 +93,12 @@ public int increaseViewCount(long id) {
 }
 ```
 
-### Service 변경
+### PostService (수정)
 
 ```java
 @Transactional
 public Post get(long id) {
 
-    // 1) 조회수 증가 + 대상 존재 확인
     int updated = postRepository.increaseViewCount(id);
     if (updated == 0) {
         throw new ApiException(
@@ -218,44 +107,150 @@ public Post get(long id) {
         );
     }
 
-    // 2) 증가된 값 재조회
     return PostMapper.toDomain(postRepository.findById(id));
 }
 ```
 
-### @Transactional을 사용하는 이유
+---
 
-* 단건 조회처럼 보여도 **쓰기(update)** 가 포함된다
-* 증가와 재조회가 분리되면
+## 실습 04 — 게시글 수정: 정규화 + 404(대상 없음)
 
-  * 중간 실패
-  * 동시성 상황에서 불일치 발생 가능
-* 하나의 트랜잭션으로 묶어 **“조회 1회 = 조회수 1 증가”** 를 보장한다
+### PostService (수정)
+
+```java
+@Transactional
+public Post update(long id, String title, String content) {
+  title = title.trim();
+  content = content.trim();
+
+  int updated = postRepository.update(id, title, content);
+  if (updated == 0) {
+    throw new ApiException(ErrorCode.NOT_FOUND_RESOURCE, "존재하지 않는 게시글입니다. id=" + id);
+  }
+
+  return PostMapper.toDomain(postRepository.findById(id));
+}
+```
 
 ---
 
-## 3. REST Client 테스트 시나리오
+## 실습 05 — 게시글 삭제: 404(대상 없음)
 
-1. 로그인
-2. 게시글 생성
-3. 단건 조회 3회
-4. 응답 `view_count`가 1씩 증가하는지 확인
-5. 다른 사용자 로그인 → 수정/삭제 시 403
-6. 로그아웃 또는 쿠키 제거 → 호출 시 401
-7. 존재하지 않는 id 호출 → 404
+### PostService (수정)
+
+```java
+public void delete(long id) {
+  int deleted = postRepository.delete(id);
+  if (deleted == 0) {
+    throw new ApiException(
+        ErrorCode.NOT_FOUND_RESOURCE,
+        "존재하지 않는 게시글입니다. id=" + id);
+  }
+}
+```
 
 ---
 
-## 완료 기준
+## 실습 06 — 게시글 수정/삭제: 인가 체크 (403)
 
-* 400: DTO 검증 실패 → 400(ApiResponse.fail)
-* 404: 존재하지 않는 id → 404(ApiResponse.fail)
-* 401: 비로그인 접근 → 401(ApiResponse.fail)
-* 403: 권한 없는 수정/삭제 → 403(ApiResponse.fail)
-* 조회수: 단건 조회 시 증가하며 트랜잭션으로 묶여 있음
+본 실습의 목표는 **인가 실패(403)** 를 **Method Security(@PreAuthorize)** 단계에서 발생시키고,
+응답 변환은 **AccessDeniedHandler(또는 GlobalExceptionHandler 정책)** 로 통일하는 것이다.
+
+핵심 규칙:
+
+* `PostAuthorization`은 **인가 판단만 수행**한다.
+* `PostAuthorization`은 **대상 없음(404)을 해석하지 않는다.**
+
+  * 대상이 없으면 `false`를 반환한다.
+* **대상 없음(404)은 Service에서 row count 기반으로 의미 해석**한다.
+
+---
+
+### 1) PostRepository (추가)
+
+```java
+boolean isOwner(long postId, long userId);
+```
+
+---
+
+### 3) JdbcPostRepository (추가)
+
+```java
+@Override
+public boolean isOwner(long postId, long userId) {
+    String sql = """
+        SELECT 1
+        FROM posts
+        WHERE id = ? AND user_id = ?
+        LIMIT 1
+    """;
+
+    Integer found = jdbcTemplate.query(
+        sql,
+        rs -> rs.next() ? 1 : null,
+        postId,
+        userId
+    );
+
+    return found != null;
+}
+```
+
+---
+
+### 4) 전제: Method Security 활성화(이미 적용)
+
+```java
+@EnableMethodSecurity
+```
+
+---
+
+### 5) PostService 수정 및 @PreAuthorize 추가
+
+```java
+/**
+ * 현재 로그인 사용자가 해당 게시글의 작성자인지 확인
+ * - PreAuthorize 전용 보조 메서드
+ */
+public boolean isOwner(Long postId) {
+  Long currentUserId = SecurityUtils.currentUserId();
+  if (currentUserId == null) {
+    return false;
+  }
+
+  return postRepository.isOwner(postId, currentUserId);
+}
+```
+
+```java
+@PreAuthorize("hasRole('ADMIN') or @postService.isOwner(#id)")
+@Transactional
+public Post update(long id, PostUpdateRequest req)
+
+@PreAuthorize("hasRole('ADMIN') or @postService.isOwner(#id)")
+public void delete(long id)
+```
+
+> 메서드 실행 이전에 인가를 먼저 검사하므로 대상이 없어도 403 에러로 내려올 수 있음
+
+---
+
+## 완료 기준 체크리스트
+
+* Validation 의존성(`spring-boot-starter-validation`)이 추가되어 있다
+* DTO에 Validation 규칙이 적용되고 Controller에서 `@Valid`로 400이 처리된다
+* 게시글 생성 시 title이 `trim()` 정규화되어 저장된다
+* 게시글 조회 시 조회수가 트랜잭션 내에서 증가한다
+* 조회/수정/삭제 시 대상이 없으면 Service에서 404로 처리된다
+* 수정/삭제에 `@PreAuthorize`가 적용되어 있다
+* 인가 실패는 403으로 처리된다
+* `PostAuthorization`은 예외 없이 boolean 판단만 수행한다
+* `@PreAuthorize` 특성상 403이 404보다 먼저 나올 수 있다
 
 ---
 
 ## 다음 단계
 
-* Comments API CRUD
+[**Comments API CRUD**](10-comments_flow_crud.md)

@@ -216,7 +216,12 @@ Controller는 요청 값 판단 실패 시 직접 처리하지 않으며,
 ```java
 @PostMapping
 public ApiResponse<Long> create(@Valid @RequestBody UserCreateRequest req) {
-    return ApiResponse.ok(userService.create(req));
+    Long id = userService.create(
+        req.getUsername(),
+        req.getPassword(),
+        req.getNickname(),
+        req.getEmail());
+    return ApiResponse.ok(id);
 }
 
 @PutMapping("/{id}/password")
@@ -224,7 +229,7 @@ public ApiResponse<Void> changePassword(
         @PathVariable Long id,
         @Valid @RequestBody UserPasswordChangeRequest req
 ) {
-    userService.changePassword(id, req);
+    userService.changePassword(id, req.getPassword());
     return ApiResponse.ok();
 }
 ```
@@ -247,22 +252,20 @@ Service는 다음을 전제로 동작한다.
 > 이미 요청 값 판단이 완료된 상태이다.
 
 ```java
-public Long create(UserCreateRequest req) {
-    String username = req.getUsername().trim().toLowerCase();
-    String nickname = req.getNickname().trim().toLowerCase();
-    
-    String email = req.getEmail();
+public Long create(String username, String password, String nickname, String email) {
+    username = username.trim().toLowerCase();
+    nickname = nickname.trim().toLowerCase();    
     String normalizedEmail = (email == null) ? null : email.toLowerCase();
 
-    String hash = passwordEncoder.encode(req.getPassword());
+    String hash = passwordEncoder.encode(password);
 
     return userRepository.save(username, hash, nickname, normalizedEmail);
 }
 ```
 
 ```java
-public void changeNickname(Long id, UserNicknameChangeRequest req){
-  String nickname = req.getNickname().trim().toLowerCase();  
+public void changeNickname(Long id, String nickname){
+  nickname = nickname.trim().toLowerCase();  
   ...
 }
 ```
@@ -389,7 +392,7 @@ public ApiResponse<Void> changeEmail(
         @PathVariable Long id,
         @Valid @RequestBody UserEmailChangeRequest req
 ) {
-    userService.changeEmail(id, req);
+    userService.changeEmail(id, req.getEmail());
     return ApiResponse.ok();
 }
 ```
@@ -405,8 +408,7 @@ public ApiResponse<Void> changeEmail(
 * 이메일을 정규화하여 저장 흐름을 호출한다
 
 ```java
-public void changeEmail(Long id, UserEmailChangeRequest req) {
-    String email = req.getEmail();
+public void changeEmail(Long id, String email) {
     String normalized = (email == null) ? null : email.toLowerCase();
 
     userRepository.updateEmail(id, normalized);

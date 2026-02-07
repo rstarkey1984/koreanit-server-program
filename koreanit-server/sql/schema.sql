@@ -23,44 +23,34 @@ CREATE TABLE users (
 -- =========================
 -- posts
 -- =========================
-CREATE TABLE posts (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 PK',
-    user_id BIGINT UNSIGNED NOT NULL COMMENT '작성자 ID',
-    title VARCHAR(200) NOT NULL COMMENT '제목',
-    content TEXT NOT NULL COMMENT '내용',
-    view_count INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '조회수',
-    comments_cnt INT UNSIGNED NOT NULL DEFAULT 0 COMMENT '댓글수',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
-    updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
-
-    INDEX idx_posts_user_id (user_id),
-    INDEX idx_posts_created_at (created_at)
+CREATE TABLE `posts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '게시글 PK',
+  `user_id` bigint unsigned DEFAULT NULL COMMENT '작성자 ID',
+  `title` varchar(200) COLLATE utf8mb4_general_ci NOT NULL COMMENT '제목',
+  `content` text COLLATE utf8mb4_general_ci NOT NULL COMMENT '내용',
+  `view_count` int unsigned NOT NULL DEFAULT '0' COMMENT '조회수',
+  `comments_cnt` int unsigned NOT NULL DEFAULT '0' COMMENT '댓글수',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
+  PRIMARY KEY (`id`),
+  KEY `idx_posts_user_id` (`user_id`),
+  KEY `idx_posts_created_at` (`created_at`),
+  CONSTRAINT `fk_users_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 );
 
 -- =========================
 -- comments
 -- =========================
-CREATE TABLE comments (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '댓글 PK',
-    post_id BIGINT UNSIGNED NOT NULL COMMENT '게시글 ID',
-    user_id BIGINT UNSIGNED NOT NULL COMMENT '댓글 작성자 ID',
-    comment VARCHAR(500) NOT NULL COMMENT '댓글 내용',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
-    updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
-
-    INDEX idx_comments_post_id (post_id),
-    INDEX idx_comments_user_id (user_id)
-);
-
-CREATE TABLE user_profiles (
-  user_id BIGINT UNSIGNED NOT NULL,
-  bio VARCHAR(300) NULL,
-  phone VARCHAR(20) NULL,
-  birth_date DATE NULL,
-  profile_image_url VARCHAR(500) NULL,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (user_id)
+CREATE TABLE `comments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '댓글 PK',
+  `post_id` bigint unsigned DEFAULT NULL COMMENT '게시글 ID',
+  `user_id` bigint unsigned DEFAULT NULL COMMENT '댓글 작성자 ID',
+  `content` varchar(500) COLLATE utf8mb4_general_ci NOT NULL COMMENT '댓글 내용',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '작성일',
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일',
+  PRIMARY KEY (`id`),
+  KEY `idx_comments_post_id` (`post_id`),
+  KEY `idx_comments_user_id` (`user_id`),
+  CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 );

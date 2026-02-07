@@ -85,8 +85,8 @@ public User get(Long id) {
 #### 적용 코드
 
 ```java
-public void changeNickname(Long id, UserNicknameChangeRequest req) {
-    String nickname = req.getNickname();
+public void changeNickname(Long id, String nickname) {
+    nickname = nickname.trim().toLowerCase();
     
     // 1) 대상 존재 여부 확인 (없으면 여기서 404)
     User user = get(id);
@@ -117,10 +117,10 @@ public void changeNickname(Long id, UserNicknameChangeRequest req) {
 #### 적용 코드
 
 ```java
-public void changePassword(Long id, UserPasswordChangeRequest req) {
-    String passwordHash = passwordEncoder.encode(req.getPassword());
+public void changePassword(Long id, String password) {
+    String hash = passwordEncoder.encode(password);
 
-    int updated = userRepository.updatePassword(id, passwordHash);
+    int updated = userRepository.updatePassword(id, hash);
 
     if (updated == 0) {
         throw new ApiException(

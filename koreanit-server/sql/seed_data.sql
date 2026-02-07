@@ -48,7 +48,7 @@ WHERE n <= 10000;
 -- =========================
 INSERT INTO posts (user_id, title, content, view_count, created_at)
 SELECT
-  1 + (n % 10000) AS user_id,
+  ((n - 1) % 10000) + 1 AS user_id,
   CONCAT('게시글 제목 ', n),
   CONCAT('게시글 내용 ', n),
   n % 500 AS view_count,
@@ -59,10 +59,10 @@ WHERE n <= 100000;
 -- =========================
 -- 4) comments 100,000
 -- =========================
-INSERT INTO comments (post_id, user_id, comment, created_at)
+INSERT INTO comments (post_id, user_id, content, created_at)
 SELECT
-  1 + (n % 100000) AS post_id,
-  1 + (n % 10000)     AS user_id,
+  ((n - 1) % 100000) + 1 AS post_id,
+  ((n - 1) % 10000) + 1 AS user_id,
   CONCAT('댓글 내용 ', n),
   NOW() - INTERVAL (n % 365) DAY AS created_at
 FROM numbers
