@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>API Client (Tailwind + Vue3)</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <!-- Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.6.8/dist/axios.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 8px 30px rgba(2,6,23,0.08)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <!-- Top bar -->
+    <header class="sticky top-0 z-20 border-b border-slate-200/70 bg-white/70 backdrop-blur dark:border-slate-800/70 dark:bg-slate-950/70">
+      <div class="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-500 dark:from-slate-200 dark:to-slate-500"></div>
+          <div>
+            <div class="text-sm text-slate-500 dark:text-slate-400">API Client</div>
+            <div class="font-semibold leading-tight">Tailwind + Vue3 + Axios</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+            <span class="inline-flex h-2 w-2 rounded-full" :class="busy ? 'bg-amber-400' : 'bg-emerald-400'"></span>
+            <span class="mono truncate max-w-[360px]">{{ baseUrl }}</span>
+          </div>
+
+          <button class="btn btn-ghost" @click="toggleDark()">
+            <span v-if="isDark">라이트</span>
+            <span v-else>다크</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Sidebar -->
+      <aside class="lg:col-span-3">
+        <div class="card p-4">
+          <div class="text-sm font-semibold mb-3">설정</div>
+
+          <label class="text-xs text-slate-500 dark:text-slate-400">Base URL</label>
+          <div class="mt-1 flex gap-2">
+            <input class="input mono flex-1" v-model="baseUrl" placeholder="http://localhost:8080" />
+            <button class="btn btn-primary" @click="applyBaseUrl" :disabled="busy">적용</button>
+          </div>
+
+          <div class="mt-4">
+            <div class="text-xs text-slate-500 dark:text-slate-400 mb-2">메뉴</div>
+            <nav class="space-y-1">
+              <button class="nav-item" :class="tab==='auth' ? 'nav-active' : ''" @click="tab='auth'">
+                Auth
+                <span class="nav-hint">login / me</span>
+              </button>
+              <button class="nav-item" :class="tab==='posts' ? 'nav-active' : ''" @click="tab='posts'">
+                Posts
+                <span class="nav-hint">list / detail</span>
+              </button>
+              <button class="nav-item" :class="tab==='users' ? 'nav-active' : ''" @click="tab='users'">
+                Users
+                <span class="nav-hint">admin only</span>
+              </button>
+              <button class="nav-item" :class="tab==='raw' ? 'nav-active' : ''" @click="tab='raw'">
+                Raw
+                <span class="nav-hint">free request</span>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Quick tips -->
+        <div class="mt-4 card p-4">
+          <div class="text-sm font-semibold mb-2">팁</div>
+          <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 list-disc pl-5">
+            <li>세션 기반이면 <span class="mono">withCredentials</span> + 쿠키 유지가 핵심</li>
+            <li>응답이 <span class="mono">{success,data}</span>면 data만 unwrap</li>
+            <li>에러도 마지막 응답에 그대로 기록</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <section class="lg:col-span-9 space-y-6">
+        <!-- AUTH -->
+        <div v-show="tab==='auth'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">로그인</div>
+                <div class="card-sub">POST /api/login, POST /api/logout, GET /api/me</div>
+              </div>
+            </div>
+            <div class="p-5 space-y-4">
+              <div>
+                <label class="label">username</label>
+                <input class="input mono" v-model.trim="auth.username" placeholder="user1" />
+              </div>
+              <div>
+                <label class="label">password</label>
+                <input class="input mono" type="password" v-model="auth.password" placeholder="1234" />
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button class="btn btn-primary" @click="login" :disabled="busy">로그인</button>
+                <button class="btn btn-ghost" @click="logout" :disabled="busy">로그아웃</button>
+                <button class="btn btn-outline" @click="me" :disabled="busy">/me</button>
+              </div>
+              <div class="text-xs text-slate-500 dark:text-slate-400">
+                세션 기반이면 브라우저 쿠키가 유지되어야 합니다.
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">현재 로그인 사용자</div>
+                <div class="card-sub">GET /api/me 결과</div>
+              </div>
+            </div>
+            <div class="p-5">
+              <div v-if="meData" class="space-y-2 text-sm">
+                <div class="kv"><div class="k">id</div><div class="v mono">{{ meData.id }}</div></div>
+                <div class="kv"><div class="k">username</div><div class="v mono">{{ meData.username }}</div></div>
+                <div class="kv"><div class="k">email</div><div class="v mono">{{ meData.email }}</div></div>
+                <div class="kv"><div class="k">nickname</div><div class="v mono">{{ meData.nickname }}</div></div>
+                <div class="kv"><div class="k">role</div><div class="v mono">{{ meData.role }}</div></div>
+              </div>
+              <div v-else class="text-sm text-slate-500 dark:text-slate-400">
+                /api/me 호출 결과가 여기에 표시됩니다.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- POSTS -->
+        <div v-show="tab==='posts'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 space-y-6">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">게시글 목록</div>
+                  <div class="card-sub">GET /api/posts?page=&limit=</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input class="input mono w-20" v-model.number="posts.query.page" type="number" min="1" />
+                  <input class="input mono w-20" v-model.number="posts.query.limit" type="number" min="1" />
+                  <button class="btn btn-outline" @click="fetchPosts" :disabled="busy">조회</button>
+                </div>
+              </div>
+
+              <div class="p-0">
+                <div v-if="posts.list.length===0" class="p-5 text-sm text-slate-500 dark:text-slate-400">
+                  목록이 비어있습니다.
+                </div>
+
+                <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
+                  <button
+                    v-for="p in posts.list"
+                    :key="p.id"
+                    class="w-full text-left px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition"
+                    @click="selectPost(p.id)"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="font-semibold truncate">{{ p.title }}</div>
+                      <div class="mono text-sm text-slate-500 dark:text-slate-400 shrink-0">#{{ p.id }}</div>
+                    </div>
+                    <div class="mt-1 flex gap-3 text-xs text-slate-500 dark:text-slate-400">
+                      <span class="mono">views={{ p.viewCount ?? p.view_count ?? '-' }}</span>
+                      <span class="mono">comments={{ p.commentsCnt ?? p.comments_cnt ?? '-' }}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">게시글 작성</div>
+                  <div class="card-sub">POST /api/posts (인증 필요)</div>
+                </div>
+              </div>
+              <div class="p-5 space-y-4">
+                <div>
+                  <label class="label">title</label>
+                  <input class="input" v-model.trim="posts.create.title" placeholder="제목" />
+                </div>
+                <div>
+                  <label class="label">content</label>
+                  <textarea class="textarea" rows="4" v-model.trim="posts.create.content" placeholder="내용"></textarea>
+                </div>
+                <button class="btn btn-primary" @click="createPost" :disabled="busy">작성</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">게시글 상세</div>
+                  <div class="card-sub">GET /api/posts/{id}</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input class="input mono w-28" v-model.number="posts.selectedId" type="number" min="1" placeholder="id" />
+                  <button class="btn btn-outline" @click="getPost(posts.selectedId)" :disabled="busy || !posts.selectedId">
+                    조회
+                  </button>
+                </div>
+              </div>
+
+              <div class="p-5">
+                <div v-if="posts.detail" class="space-y-6">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="text-xl font-semibold truncate">{{ posts.detail.title }}</div>
+                      <div class="mono text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        id={{ posts.detail.id }},
+                        userId={{ posts.detail.userId ?? posts.detail.user_id ?? '-' }},
+                        views={{ posts.detail.viewCount ?? posts.detail.view_count ?? '-' }},
+                        comments={{ posts.detail.commentsCnt ?? posts.detail.comments_cnt ?? '-' }}
+                      </div>
+                    </div>
+                    <button class="btn btn-danger" @click="deletePost(posts.detail.id)" :disabled="busy">삭제</button>
+                  </div>
+
+                  <div>
+                    <div class="text-sm font-semibold mb-2">content</div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm whitespace-pre-wrap dark:border-slate-800 dark:bg-slate-900/50">
+                      {{ posts.detail.content }}
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                      <div class="text-sm font-semibold mb-3">게시글 수정</div>
+                      <div class="space-y-3">
+                        <div>
+                          <label class="label">title</label>
+                          <input class="input" v-model.trim="posts.update.title" />
+                        </div>
+                        <div>
+                          <label class="label">content</label>
+                          <textarea class="textarea" rows="4" v-model.trim="posts.update.content"></textarea>
+                        </div>
+                        <button class="btn btn-outline" @click="updatePost(posts.detail.id)" :disabled="busy">수정</button>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">
+                          작성자 또는 관리자: PUT /api/posts/{id}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                      <div class="text-sm font-semibold mb-3">댓글</div>
+
+                      <div class="flex items-center gap-2 mb-3">
+                        <input class="input mono w-28" v-model.number="comments.query.before" type="number" placeholder="before(id)" />
+                        <input class="input mono w-20" v-model.number="comments.query.limit" type="number" min="1" />
+                        <button class="btn btn-outline" @click="fetchComments(posts.detail.id)" :disabled="busy">목록</button>
+                      </div>
+
+                      <textarea class="textarea" rows="2" v-model.trim="comments.create.content" placeholder="댓글 내용"></textarea>
+                      <div class="flex items-center gap-2 mt-2">
+                        <button class="btn btn-primary" @click="createComment(posts.detail.id)" :disabled="busy">댓글 작성</button>
+                      </div>
+
+                      <div class="mt-4">
+                        <div v-if="comments.list.length===0" class="text-sm text-slate-500 dark:text-slate-400">
+                          댓글이 없습니다.
+                        </div>
+
+                        <div v-else class="space-y-2">
+                          <div v-for="c in comments.list" :key="c.id" class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                            <div class="flex items-start justify-between gap-2">
+                              <div class="mono text-xs text-slate-500 dark:text-slate-400">
+                                #{{ c.id }} userId={{ c.userId ?? c.user_id ?? '-' }}
+                              </div>
+                              <button class="btn btn-danger-sm" @click="deleteComment(c.id, posts.detail.id)" :disabled="busy">
+                                삭제
+                              </button>
+                            </div>
+                            <div class="mt-2 text-sm">{{ c.content }}</div>
+                            <div class="mono text-xs text-slate-500 dark:text-slate-400 mt-2">
+                              createdAt={{ c.createdAt ?? c.created_at ?? '-' }}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="mt-3 text-xs text-slate-500 dark:text-slate-400 leading-5">
+                          목록: GET /api/posts/{postId}/comments?before=&limit=<br />
+                          삭제: DELETE /api/comments/{id}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="text-sm text-slate-500 dark:text-slate-400">
+                  왼쪽에서 게시글을 선택하거나 id로 조회하세요.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- USERS -->
+        <div v-show="tab==='users'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="space-y-6">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">회원가입</div>
+                  <div class="card-sub">POST /api/users</div>
+                </div>
+              </div>
+              <div class="p-5 space-y-4">
+                <div>
+                  <label class="label">username</label>
+                  <input class="input mono" v-model.trim="users.create.username" />
+                </div>
+                <div>
+                  <label class="label">password</label>
+                  <input class="input mono" type="password" v-model="users.create.password" />
+                </div>
+                <div>
+                  <label class="label">email</label>
+                  <input class="input mono" v-model.trim="users.create.email" />
+                </div>
+                <div>
+                  <label class="label">nickname</label>
+                  <input class="input mono" v-model.trim="users.create.nickname" />
+                </div>
+                <button class="btn btn-primary" @click="signup" :disabled="busy">회원가입</button>
+                <div class="text-xs text-slate-500 dark:text-slate-400">중복이면 409, 검증 실패면 400</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">회원 목록(관리자)</div>
+                  <div class="card-sub">GET /api/users?limit=</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input class="input mono w-28" v-model.number="users.query.limit" type="number" min="1" />
+                  <button class="btn btn-outline" @click="fetchUsers" :disabled="busy">조회</button>
+                </div>
+              </div>
+
+              <div class="p-0">
+                <div v-if="users.list.length===0" class="p-5 text-sm text-slate-500 dark:text-slate-400">
+                  목록이 비어있습니다.
+                </div>
+
+                <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
+                  <button
+                    v-for="u in users.list"
+                    :key="u.id"
+                    class="w-full text-left px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition"
+                    @click="selectUser(u.id)"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="font-semibold">{{ u.username }}</div>
+                      <div class="mono text-sm text-slate-500 dark:text-slate-400 shrink-0">#{{ u.id }}</div>
+                    </div>
+                    <div class="mono text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      email={{ u.email ?? '-' }} nickname={{ u.nickname ?? '-' }} role={{ u.role ?? '-' }}
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">회원 상세(관리자)</div>
+                <div class="card-sub">GET /api/users/{id}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <input class="input mono w-28" v-model.number="users.selectedId" type="number" min="1" placeholder="id" />
+                <button class="btn btn-outline" @click="getUser(users.selectedId)" :disabled="busy || !users.selectedId">
+                  조회
+                </button>
+              </div>
+            </div>
+
+            <div class="p-5">
+              <div v-if="users.detail" class="space-y-5">
+                <div class="space-y-2 text-sm">
+                  <div class="kv"><div class="k">id</div><div class="v mono">{{ users.detail.id }}</div></div>
+                  <div class="kv"><div class="k">username</div><div class="v mono">{{ users.detail.username }}</div></div>
+                  <div class="kv"><div class="k">email</div><div class="v mono">{{ users.detail.email }}</div></div>
+                  <div class="kv"><div class="k">nickname</div><div class="v mono">{{ users.detail.nickname }}</div></div>
+                  <div class="kv"><div class="k">role</div><div class="v mono">{{ users.detail.role }}</div></div>
+                </div>
+
+                <div class="flex gap-2">
+                  <button class="btn btn-danger" @click="deleteUser(users.detail.id)" :disabled="busy">삭제</button>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                  <div class="text-sm font-semibold mb-3">정보 변경</div>
+                  <div class="space-y-3">
+                    <div>
+                      <div class="label">닉네임</div>
+                      <div class="flex gap-2">
+                        <input class="input mono flex-1" v-model.trim="users.change.nickname" placeholder="new nickname" />
+                        <button class="btn btn-outline" @click="changeNickname(users.detail.id)" :disabled="busy">변경</button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="label">이메일</div>
+                      <div class="flex gap-2">
+                        <input class="input mono flex-1" v-model.trim="users.change.email" placeholder="new email" />
+                        <button class="btn btn-outline" @click="changeEmail(users.detail.id)" :disabled="busy">변경</button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="label">비밀번호</div>
+                      <div class="flex gap-2">
+                        <input class="input mono flex-1" type="password" v-model="users.change.password" placeholder="new password" />
+                        <button class="btn btn-outline" @click="changePassword(users.detail.id)" :disabled="busy">변경</button>
+                      </div>
+                    </div>
+
+                    <div class="text-xs text-slate-500 dark:text-slate-400">
+                      변경 API는 "본인 또는 관리자" 정책일 수 있습니다.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="text-sm text-slate-500 dark:text-slate-400">
+                좌측 목록에서 선택하거나 id로 조회하세요.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAW -->
+        <div v-show="tab==='raw'" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Raw Request</div>
+                <div class="card-sub">자유롭게 API 호출</div>
+              </div>
+            </div>
+            <div class="p-5 space-y-4">
+              <div>
+                <label class="label">Method</label>
+                <select class="input mono" v-model="raw.method">
+                  <option>GET</option>
+                  <option>POST</option>
+                  <option>PUT</option>
+                  <option>DELETE</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="label">Path</label>
+                <input class="input mono" v-model.trim="raw.path" placeholder="/api/posts" />
+              </div>
+
+              <div>
+                <label class="label">JSON Body</label>
+                <textarea class="textarea mono" rows="10" v-model="raw.body"></textarea>
+              </div>
+
+              <button class="btn btn-outline" @click="sendRaw" :disabled="busy">전송</button>
+              <div class="text-xs text-slate-500 dark:text-slate-400">
+                세션 인증이면 쿠키가 유지되어야 합니다.
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Last Response</div>
+                <div class="card-sub">마지막 응답(성공/실패 포함)</div>
+              </div>
+            </div>
+            <div class="p-5 space-y-3">
+              <div class="mono text-xs text-slate-500 dark:text-slate-400">
+                status={{ last.status ?? '-' }}
+              </div>
+              <pre class="mono text-xs rounded-xl border border-slate-200 bg-slate-50 p-4 overflow-auto dark:border-slate-800 dark:bg-slate-900/50">{{ pretty(last.data) }}</pre>
+              <div class="text-xs text-slate-500 dark:text-slate-400">
+                에러일 때도 Axios 응답/에러 내용을 최대한 보여줍니다.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toasts -->
+    <div class="fixed bottom-4 right-4 z-50 space-y-2 w-[360px] max-w-[calc(100vw-2rem)]">
+      <div
+        v-for="t in toasts"
+        :key="t.id"
+        class="rounded-xl border px-4 py-3 shadow-soft bg-white dark:bg-slate-900"
+        :class="toastClass(t.type)"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div class="text-sm leading-snug">{{ t.message }}</div>
+          <button class="text-xs px-2 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"
+                  @click="removeToast(t.id)">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          tab: 'auth',
+          baseUrl: 'http://localhost:8080',
+          api: null,
+          busy: false,
+
+          // 기존 alert 대신 toast 큐
+          toasts: [],
+
+          last: { status: null, data: null },
+
+          auth: { username: '', password: '' },
+          meData: null,
+
+          posts: {
+            query: { page: 1, limit: 20 },
+            list: [],
+            selectedId: null,
+            detail: null,
+            create: { title: '', content: '' },
+            update: { title: '', content: '' }
+          },
+
+          comments: {
+            query: { before: null, limit: 20 },
+            list: [],
+            create: { content: '' }
+          },
+
+          users: {
+            query: { limit: 50 },
+            list: [],
+            selectedId: null,
+            detail: null,
+            create: { username: '', password: '', email: '', nickname: '' },
+            change: { nickname: '', email: '', password: '' }
+          },
+
+          raw: { method: 'GET', path: '/api/posts', body: '{\n  \n}' },
+
+          isDark: false
+        };
+      },
+
+      mounted() {
+        // 다크모드 초기값(시스템/브라우저에 맞추고 싶으면 여기서 확장)
+        this.isDark = document.documentElement.classList.contains('dark');
+        this.applyBaseUrl();
+      },
+
+      methods: {
+        // UI
+        toggleDark() {
+          this.isDark = !this.isDark;
+          document.documentElement.classList.toggle('dark', this.isDark);
+        },
+
+        toast(type, message) {
+          const id = Date.now() + Math.random();
+          this.toasts.push({ id, type, message });
+          // 3.5초 뒤 자동 제거
+          setTimeout(() => this.removeToast(id), 3500);
+        },
+
+        removeToast(id) {
+          this.toasts = this.toasts.filter(t => t.id !== id);
+        },
+
+        toastClass(type) {
+          if (type === 'success') return 'border-emerald-200 text-emerald-900 dark:border-emerald-900/40 dark:text-emerald-200';
+          if (type === 'error') return 'border-rose-200 text-rose-900 dark:border-rose-900/40 dark:text-rose-200';
+          return 'border-sky-200 text-sky-900 dark:border-sky-900/40 dark:text-sky-200';
+        },
+
+        pretty(v) {
+          try { return JSON.stringify(v, null, 2); }
+          catch (e) { return String(v); }
+        },
+
+        unwrap(resData) {
+          if (resData && typeof resData === 'object' && 'success' in resData) {
+            if (resData.success) return resData.data;
+            return resData;
+          }
+          return resData;
+        },
+
+        setLast(responseOrError) {
+          if (responseOrError && responseOrError.response) {
+            this.last.status = responseOrError.response.status;
+            this.last.data = responseOrError.response.data;
+          } else if (responseOrError) {
+            this.last.status = responseOrError.status;
+            this.last.data = responseOrError.data;
+          } else {
+            this.last.status = null;
+            this.last.data = null;
+          }
+        },
+
+        applyBaseUrl() {
+          this.api = axios.create({
+            baseURL: this.baseUrl,
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' }
+          });
+          this.toast('info', 'Base URL 적용 완료');
+        },
+
+        async safeCall(fn) {
+          this.busy = true;
+          try {
+            const res = await fn();
+            this.setLast(res);
+            return res;
+          } catch (e) {
+            this.setLast(e);
+
+            const status = e?.response?.status;
+            const body = e?.response?.data;
+            const msg = body?.message || e?.message || `HTTP ${status ?? ''} 요청 실패`;
+            const code = body?.code;
+
+            this.toast('error', code ? `${code}: ${msg}` : msg);
+            return null;
+          } finally {
+            this.busy = false;
+          }
+        },
+
+        // Auth
+        async login() {
+          const payload = { username: this.auth.username, password: this.auth.password };
+          const res = await this.safeCall(() => this.api.post('/api/login', payload));
+          if (!res) return;
+          this.meData = this.unwrap(res.data);
+          this.toast('success', '로그인 성공');
+        },
+
+        async logout() {
+          const res = await this.safeCall(() => this.api.post('/api/logout'));
+          if (!res) return;
+          this.meData = null;
+          this.toast('success', '로그아웃 완료');
+        },
+
+        async me() {
+          const res = await this.safeCall(() => this.api.get('/api/me'));
+          if (!res) return;
+          this.meData = this.unwrap(res.data);
+          this.toast('info', '/me 조회 완료');
+        },
+
+        // Posts
+        async fetchPosts() {
+          const { page, limit } = this.posts.query;
+          const res = await this.safeCall(() => this.api.get('/api/posts', { params: { page, limit } }));
+          if (!res) return;
+
+          const data = this.unwrap(res.data);
+          this.posts.list = Array.isArray(data) ? data : (data?.items ?? data?.list ?? []);
+          this.toast('info', `게시글 목록 ${this.posts.list.length}건`);
+        },
+
+        async selectPost(id) {
+          this.posts.selectedId = id;
+          await this.getPost(id);
+        },
+
+        async getPost(id) {
+          if (!id) return;
+          const res = await this.safeCall(() => this.api.get(`/api/posts/${id}`));
+          if (!res) return;
+
+          const data = this.unwrap(res.data);
+          this.posts.detail = data;
+          this.posts.update.title = data?.title ?? '';
+          this.posts.update.content = data?.content ?? '';
+          await this.fetchComments(id);
+          this.toast('info', `게시글 #${id} 조회 완료`);
+        },
+
+        async createPost() {
+          const payload = { title: this.posts.create.title, content: this.posts.create.content };
+          const res = await this.safeCall(() => this.api.post('/api/posts', payload));
+          if (!res) return;
+
+          const created = this.unwrap(res.data);
+          this.toast('success', '게시글 작성 완료');
+          this.posts.create.title = '';
+          this.posts.create.content = '';
+          await this.fetchPosts();
+          if (created?.id) await this.getPost(created.id);
+        },
+
+        async updatePost(id) {
+          const payload = { title: this.posts.update.title, content: this.posts.update.content };
+          const res = await this.safeCall(() => this.api.put(`/api/posts/${id}`, payload));
+          if (!res) return;
+
+          this.toast('success', '게시글 수정 완료');
+          await this.getPost(id);
+          await this.fetchPosts();
+        },
+
+        async deletePost(id) {
+          if (!confirm(`게시글 #${id} 삭제할까요?`)) return;
+          const res = await this.safeCall(() => this.api.delete(`/api/posts/${id}`));
+          if (!res) return;
+
+          this.toast('success', '게시글 삭제 완료');
+          this.posts.detail = null;
+          await this.fetchPosts();
+        },
+
+        // Comments
+        async fetchComments(postId) {
+          const params = { limit: this.comments.query.limit };
+          if (this.comments.query.before) params.before = this.comments.query.before;
+
+          const res = await this.safeCall(() => this.api.get(`/api/posts/${postId}/comments`, { params }));
+          if (!res) return;
+
+          const data = this.unwrap(res.data);
+          this.comments.list = Array.isArray(data) ? data : (data?.items ?? data?.list ?? []);
+        },
+
+        async createComment(postId) {
+          const payload = { content: this.comments.create.content };
+          const res = await this.safeCall(() => this.api.post(`/api/posts/${postId}/comments`, payload));
+          if (!res) return;
+
+          this.toast('success', '댓글 작성 완료');
+          this.comments.create.content = '';
+          await this.fetchComments(postId);
+          await this.getPost(postId);
+        },
+
+        async deleteComment(id, postId) {
+          if (!confirm(`댓글 #${id} 삭제할까요?`)) return;
+          const res = await this.safeCall(() => this.api.delete(`/api/comments/${id}`));
+          if (!res) return;
+
+          this.toast('success', '댓글 삭제 완료');
+          await this.fetchComments(postId);
+          await this.getPost(postId);
+        },
+
+        // Users
+        async signup() {
+          const payload = { ...this.users.create };
+          const res = await this.safeCall(() => this.api.post('/api/users', payload));
+          if (!res) return;
+
+          this.toast('success', '회원가입 완료');
+          this.users.create = { username: '', password: '', email: '', nickname: '' };
+        },
+
+        async fetchUsers() {
+          const res = await this.safeCall(() => this.api.get('/api/users', { params: { limit: this.users.query.limit } }));
+          if (!res) return;
+
+          const data = this.unwrap(res.data);
+          this.users.list = Array.isArray(data) ? data : (data?.items ?? data?.list ?? []);
+          this.toast('info', `회원 목록 ${this.users.list.length}건`);
+        },
+
+        async selectUser(id) {
+          this.users.selectedId = id;
+          await this.getUser(id);
+        },
+
+        async getUser(id) {
+          if (!id) return;
+          const res = await this.safeCall(() => this.api.get(`/api/users/${id}`));
+          if (!res) return;
+
+          this.users.detail = this.unwrap(res.data);
+          this.toast('info', `회원 #${id} 조회 완료`);
+        },
+
+        async deleteUser(id) {
+          if (!confirm(`회원 #${id} 삭제할까요?`)) return;
+          const res = await this.safeCall(() => this.api.delete(`/api/users/${id}`));
+          if (!res) return;
+
+          this.toast('success', '회원 삭제 완료');
+          this.users.detail = null;
+          await this.fetchUsers();
+        },
+
+        async changeNickname(id) {
+          const payload = { nickname: this.users.change.nickname };
+          const res = await this.safeCall(() => this.api.put(`/api/users/${id}/nickname`, payload));
+          if (!res) return;
+          this.toast('success', '닉네임 변경 완료');
+          await this.getUser(id);
+        },
+
+        async changeEmail(id) {
+          const payload = { email: this.users.change.email };
+          const res = await this.safeCall(() => this.api.put(`/api/users/${id}/email`, payload));
+          if (!res) return;
+          this.toast('success', '이메일 변경 완료');
+          await this.getUser(id);
+        },
+
+        async changePassword(id) {
+          const payload = { password: this.users.change.password };
+          const res = await this.safeCall(() => this.api.put(`/api/users/${id}/password`, payload));
+          if (!res) return;
+          this.toast('success', '비밀번호 변경 완료');
+        },
+
+        // Raw
+        async sendRaw() {
+          const method = this.raw.method.toLowerCase();
+          const url = this.raw.path.startsWith('/') ? this.raw.path : `/${this.raw.path}`;
+
+          let data = undefined;
+          if (['post', 'put', 'patch'].includes(method)) {
+            try {
+              data = this.raw.body?.trim() ? JSON.parse(this.raw.body) : {};
+            } catch (e) {
+              this.toast('error', 'JSON Body 파싱 실패');
+              return;
+            }
+          }
+
+          const res = await this.safeCall(() => this.api.request({ method, url, data }));
+          if (!res) return;
+          this.toast('success', 'Raw 요청 완료');
+        }
+      }
+    }).mount('#app');
+  </script>
+
+  <!-- Component styles (Tailwind @apply 대신, HTML에 클래스가 너무 길어지는 걸 줄이기 위한 최소 CSS) -->
+  <style>
+    .card {
+      border: 1px solid rgba(148,163,184,.35);
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.06);
+    }
+    .dark .card { background: rgba(15,23,42,.6); border-color: rgba(51,65,85,.6); }
+
+    .card-header {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(148,163,184,.25);
+    }
+    .dark .card-header { border-color: rgba(51,65,85,.6); }
+
+    .card-title { font-weight: 700; }
+    .card-sub { font-size: 12px; color: rgba(100,116,139,1); }
+    .dark .card-sub { color: rgba(148,163,184,1); }
+
+    .label { display:block; font-size: 12px; color: rgba(100,116,139,1); margin-bottom: 6px; }
+    .dark .label { color: rgba(148,163,184,1); }
+
+    .input, .textarea {
+      width: 100%;
+      border: 1px solid rgba(148,163,184,.5);
+      background: white;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+    .input:focus, .textarea:focus { box-shadow: 0 0 0 3px rgba(100,116,139,.25); }
+    .dark .input, .dark .textarea { background: rgba(2,6,23,.35); border-color: rgba(51,65,85,.8); color: rgba(226,232,240,1); }
+
+    .btn {
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: background .15s, border-color .15s, transform .02s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+
+    .btn-outline { background: white; border-color: rgba(148,163,184,.6); }
+    .btn-outline:hover { background: rgba(248,250,252,1); }
+    .dark .btn-outline { background: rgba(2,6,23,.2); border-color: rgba(51,65,85,.8); }
+
+    .btn-ghost { background: transparent; border-color: rgba(148,163,184,.4); }
+    .btn-ghost:hover { background: rgba(15,23,42,.04); }
+    .dark .btn-ghost:hover { background: rgba(226,232,240,.06); }
+
+    .btn-danger { background: #e11d48; color: white; }
+    .btn-danger:hover { background: #be123c; }
+    .btn-danger-sm {
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #e11d48;
+      color: white;
+      border: 1px solid transparent;
+    }
+    .btn-danger-sm:hover { background:#be123c; }
+
+    .nav-item{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,.25);
+      background: rgba(255,255,255,.7);
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .dark .nav-item { background: rgba(2,6,23,.25); border-color: rgba(51,65,85,.7); }
+    .nav-item:hover { background: rgba(248,250,252,1); }
+    .dark .nav-item:hover { background: rgba(15,23,42,.5); }
+    .nav-active {
+      border-color: rgba(59,130,246,.55);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    .nav-hint{
+      font-weight: 500;
+      font-size: 12px;
+      color: rgba(100,116,139,1);
+    }
+    .dark .nav-hint { color: rgba(148,163,184,1); }
+
+    .kv { display:grid; grid-template-columns: 120px 1fr; gap: 12px; }
+    .k { color: rgba(100,116,139,1); }
+    .dark .k { color: rgba(148,163,184,1); }
+    .v { color: inherit; }
+  </style>
+</body>
+</html>
