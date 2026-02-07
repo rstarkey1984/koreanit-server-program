@@ -9,20 +9,14 @@
 
 ## 1. 실습 목표
 
-### 1-1. 실패 의미 해석 위치 고정
+### 실패 의미 해석 위치 고정
 
 | HTTP 상태 | 실패 의미 | 해석 위치                          | 응답 변환                             |
 | ------- | ----- | ------------------------------ | --------------------------------- |
 | 400     | 입력 오류 | Request DTO + Validation       | GlobalExceptionHandler            |
 | 404     | 대상 없음 | Service                        | GlobalExceptionHandler            |
 | 401     | 인증 실패 | Security(Filter / EntryPoint)  | Security Handler                  |
-| 403     | 인가 실패 | Method Security(@PreAuthorize) | Security Handler 또는 GlobalHandler |
-
-### 1-2. 조회수 증가 규칙
-
-* `GET /api/posts/{id}` 호출 시 `view_count` 1 증가
-* 증가(update) + 재조회(select)는 **하나의 트랜잭션**
-* 응답에는 **증가된 view_count**가 반영되어야 한다
+| 403     | 인가 실패 | Method Security(@PreAuthorize) + Service | GlobalExceptionHandler |
 
 ---
 

@@ -170,7 +170,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
       FilterChain filterChain) throws ServletException, IOException {
 
     // 1. 현재 요청의 SecurityContext 획득
-    var context = SecurityContextHolder.getContext();
+    SecurityContext context = SecurityContextHolder.getContext();
 
     // 2. 현재 Authentication 조회
     Authentication cur = context.getAuthentication();
