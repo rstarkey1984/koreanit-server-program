@@ -630,4 +630,4 @@ DELETE {{host}}/api/comments/1
 
 ## 다음 단계
 
-엔드포인트 정리 및 요청데이터 응답데이터 정리
+[**Spring Boot API → HTML Client 생성을 위한 계약 문서**](11-spring-api-html-client-contract.md)
