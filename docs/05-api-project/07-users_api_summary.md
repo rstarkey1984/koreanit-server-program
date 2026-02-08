@@ -18,16 +18,16 @@ Spring Security Filter Chain
   ├─ 인가 실패 → 403 (FORBIDDEN)
         ↓
 DispatcherServlet
-        ↓ 입력 의미 해석 (400)
-Controller
-        ↓ 메서드 인가 실패 (403)
-Service
+        ↓ 
+Controller 입력 의미 해석 (400)
+        ↓ 
+Service 메서드 실행전 인가 실패 (403)
   ├─ 대상 없음 해석 (404)
   ├─ 중복 제약 해석 (409)  
         ↓
-Repository
+   Repository
         ↓
-Database
+    Database
 ```
 
 요청은 **위에서 아래 방향으로 단방향 처리**되며, 실패는 발생 지점에서 의미만 결정되고 응답 변환은 공통 계층에서 수행된다.
@@ -38,21 +38,22 @@ Database
 
 ### 2-1. 계층별 책임
 
-| 계층                     | 책임                | 비고            |
-| ---------------------- | ----------------- | ------------- |
-| Filter                 | 요청 로깅, 인증 컨텍스트 준비 | 비즈니스 로직 없음    |
-| Security               | 인증(401), 인가(403)  | 도메인 로직 없음     |
-| Controller             | 요청 전달, 응답 반환      | 판단/예외 처리 금지   |
-| Service                | 비즈니스 규칙, 실패 의미 해석 | HTTP 응답 생성 금지 |
-| Repository             | DB 접근             | 의미 해석 금지      |
-| GlobalExceptionHandler | 예외 → HTTP 응답 변환   | 단일 처리 지점      |
+| 계층                     | 책임                | 비고                |
+| ---------------------- | ----------------- | ----------------- |
+| Filter                 | 요청 로깅, 인증 컨텍스트 준비 | 비즈니스 로직 없음        |
+| Security               | 인증(401), 인가(403)  | 도메인/비즈니스 로직 없음    |
+| Controller             | 요청 전달, 응답 반환      | 판단·의미 해석·예외 처리 금지 |
+| Service                | 비즈니스 규칙, 실패 의미 해석 | HTTP 응답 생성 금지     |
+| Repository             | DB 접근             | 의미 해석·정책 판단 금지    |
+| GlobalExceptionHandler | 예외 → HTTP 응답 변환   | 예외 처리 단일 지점       |
+
 
 ---
 
 ### 2-2. 데이터 타입 사용 규칙
 
 ```text
-Repository → Entity
+Repository  → Entity
 Service     → Domain
 Controller  → DTO
 ```
@@ -67,7 +68,7 @@ Controller  → DTO
 
 ## 3. 실패 처리 구조 (의미별 분리)
 
-### 3-1. 실패 유형별 책임
+### 실패 유형별 책임
 
 | 실패 의미      | 판단 계층                   | HTTP 상태 |
 | ---------- | ----------------------- | ------- |
@@ -75,29 +76,17 @@ Controller  → DTO
 | 대상 리소스 없음  | Service                 | 404     |
 | 중복 제약 위반   | Service                 | 409     |
 | 인증 실패      | Security                | 401     |
-| 인가 실패      | Security / Method       | 403     |
+| 인가 실패      | Service Method       | 403     |
 
 ---
 
-### 3-2. Service 계층의 역할
+## 4. 공통 모듈 구성
 
-Service 계층은 다음 책임만을 가진다.
-
-* 정상 비즈니스 흐름 수행
-* Repository 결과를 업무 의미로 해석
-* 실패 시 ApiException(ErrorCode, message) 발생
-
-HTTP 상태 코드 및 응답 포맷 생성은 Service의 책임이 아니다.
-
----
-
-## 4. 공통 모듈 구성 (완료 상태)
-
-### 4-1. 공통 응답 포맷
+### 4-1. 공통 응답 바디 포맷
 
 * 모든 응답은 ApiResponse 구조로 통일
 * 성공/실패 여부는 success 필드로 판단
-* 401/403 포함 전 구간 동일 포맷 유지
+* 응답시 전 구간 동일 포맷 유지
 
 ---
 
@@ -121,20 +110,21 @@ HTTP 상태 코드 및 응답 포맷 생성은 Service의 책임이 아니다.
 
 ### 5-1. 인증 (401)
 
+> URL 레벨 인증: SecurityConfig
+
 ```text
 Session
  → SessionAuthenticationFilter
  → Authentication 생성
- → SecurityContext 주입
+ → SecurityContext <- Authentication 주입
 ```
 
-인증 판단 기준은 세션 존재 여부가 아니라 **SecurityContext 내 Authentication 존재 여부**이다.
+인증 판단 기준은 세션 존재 여부로 생성된  **SecurityContext 내 Authentication 존재 여부** 로 한다.
 
 ---
 
 ### 5-2. 인가 (403)
 
-* URL 레벨 인가: SecurityConfig
 * 메서드 레벨 인가: @PreAuthorize
 
 권한 모델은 ROLE 기반이며, "본인 또는 관리자" 규칙은 메서드 레벨에서 처리한다.
