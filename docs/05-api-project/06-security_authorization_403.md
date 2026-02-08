@@ -95,7 +95,7 @@ INSERT INTO user_roles (user_id, role) VALUES (1, 'ROLE_USER');
 
 ## 5. Repository — user_roles 조회
 
-### 5-1. Repository 인터페이스
+### 5-1. Repository 인터페이스 ( 작성 )
 
 ```java
 package com.koreanit.spring.repository;
@@ -110,7 +110,7 @@ public interface UserRoleRepository {
 }
 ```
 
-### 5-2. JdbcTemplate 구현체
+### 5-2. JdbcTemplate 구현체 ( 작성 )
 
 ```java
 package com.koreanit.spring.repository.impl;
@@ -155,7 +155,7 @@ public class JdbcUserRoleRepository implements UserRoleRepository {
 
 ---
 
-## 6. SessionAuthenticationFilter — authorities 주입
+## 6. SessionAuthenticationFilter ( 수정 ) — authorities 주입
 
 ```java
 package com.koreanit.spring.security;
@@ -252,10 +252,14 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
                 null,
                 resolveAuthorities(userId));
 
+            // Authentication을 SecurityContext에 주입
             context.setAuthentication(auth);
-
           } catch (EmptyResultDataAccessException e) {
+            // 사용자 조회 실패 시 무시(인증 주입 안 함)
+            // 세션에 쓰레기 userId가 남은 케이스: 로그인 해제 처리
             session.removeAttribute(SESSION_USER_ID);
+            // 또는 session.invalidate();
+            // 인증 주입 안 하고 익명으로 통과
           }
         }
       }
@@ -394,16 +398,7 @@ public class SecurityConfig {
 
 ## 7. Method Security — 본인 또는 관리자 제어
 
-### 7-1. Method Security 활성화
-
-```java
-@Configuration
-@EnableMethodSecurity
-public class MethodSecurityConfig {
-}
-```
-
-### 7-2. 현재 로그인 사용자 id 조회 유틸
+### 현재 로그인 사용자 id 조회 유틸
 
 ```java
 package com.koreanit.spring.security;
@@ -430,22 +425,49 @@ public class SecurityUtils {
 
 ---
 
-## 8. Service 메서드에 @PreAuthorize 적용
+## 8. @PreAuthorize 를 사용한 403 인가 정책 적용
+
+### 8-1. `@PreAuthorize` 를 사용하기 위해서 Method Security 활성화
 
 ```java
-@PreAuthorize("hasRole('ADMIN') or #id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()")
+package com.koreanit.spring.security.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+@Configuration
+@EnableMethodSecurity
+public class MethodSecurityConfig {
+}
+```
+
+
+### 8-2. UserService 메서드에 `@PreAuthorize` 적용
+
+`@PreAuthorize` 에서 사용될 유틸 메서드 작성
+
+```java
+public boolean isSelf(Long userId) {
+  Long currentUserId = SecurityUtils.currentUserId();
+  return currentUserId != null && userId != null && currentUserId.equals(userId);
+}
+```
+
+관리자 또는 본인 일 경우
+```java
+@PreAuthorize("hasRole('ADMIN') or @userService.isSelf(#id)")
 public User get(Long id)
 
 @PreAuthorize("hasRole('ADMIN')")
 public List<User> list(int limit)
 
-@PreAuthorize("hasRole('ADMIN') or #id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()")
+@PreAuthorize("hasRole('ADMIN') or @userService.isSelf(#id)")
 public void changeNickname(Long id, String nickname)
 
-@PreAuthorize("hasRole('ADMIN') or #id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()")
+@PreAuthorize("hasRole('ADMIN') or @userService.isSelf(#id)")
 public void changePassword(Long id, String password)
 
-@PreAuthorize("hasRole('ADMIN') or #id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()")
+@PreAuthorize("hasRole('ADMIN') or @userService.isSelf(#id)")
 public void delete(Long id)
 ```
 
@@ -458,7 +480,22 @@ public void delete(Long id)
 
 ---
 
-### 9-1. 선행 조건 (@EnableMethodSecurity)
+### 9-1. @PreAuthorize란 무엇인가
+
+`@PreAuthorize`는 **메서드가 실행되기 전에 인가(Authorization) 조건을 검사**하는
+Spring Security의 **메서드 보안 애너테이션**이다.
+
+* “이 메서드를 누가 실행할 수 있는가”를 선언적으로 표현한다
+* 조건을 만족하지 못하면 **메서드 본문은 실행되지 않는다**
+
+즉,
+
+> 요청을 허용할지 말지를
+> **비즈니스 로직에 들어가기 전에** 결정하는 장치다.
+
+---
+
+### 9-2. 선행 조건 (@EnableMethodSecurity)
 
 `@PreAuthorize`를 사용하려면 **메서드 보안 기능을 반드시 활성화**해야 한다.
 
@@ -468,50 +505,16 @@ public void delete(Long id)
 public class MethodSecurityConfig {
 }
 ```
-
-* `@EnableMethodSecurity`가 있어야 `@PreAuthorize` 가 동작한다
-* 이 설정이 없으면 애너테이션을 붙여도 **아무 효과가 없다**
-* 보통 `security` 패키지에 전용 설정 클래스로 둔다
-
----
-
-### 9-2. @PreAuthorize란 무엇인가
-
-`@PreAuthorize`는 **메서드가 실행되기 전에 인가(Authorization) 조건을 검사**하는
-Spring Security의 **메서드 보안 애너테이션**이다.
-
-* “이 메서드를 누가 실행할 수 있는가”를 선언적으로 표현한다
-* 조건을 만족하지 못하면 **메서드 본문은 실행되지 않는다**
-* Controller가 아니라 **Service 계층에서 인가 규칙을 고정**하는 것이 핵심이다
-
-즉,
-
-> 요청을 허용할지 말지를
-> **비즈니스 로직에 들어가기 전에** 결정하는 장치다.
+1. `@Configuration`
+   - 스프링 설정 클래스임을 의미
+   - 애플리케이션 시작 시 컨텍스트에 로딩됨
+2. `@EnableMethodSecurity`
+   - 메서드 단위 보안 활성화
+   - 이게 켜지면 `@PreAuthorize` 가 동작한다
 
 ---
 
-### 9-3. 언제 동작하는가 (실행 시점)
-
-요청 흐름 기준:
-
-```text
-Client
- → Filter
- → Spring Security Filter Chain
- → DispatcherServlet
- → Controller
- → Service 메서드 호출 시점
-    ↳ @PreAuthorize 검사
-        - true  → 메서드 실행
-        - false → 예외 발생
-```
-
-* **Service 메서드 진입 직전에** 인가가 차단된다
-
----
-
-### 9-4. 내부 동작 개념
+### 9-3. 내부 동작 개념
 
 `@PreAuthorize`는 내부적으로 다음을 수행한다.
 
@@ -553,23 +556,10 @@ Client
 
 ---
 
-### 10-3. 정적 메서드 호출
+### 10-3. Bean 객체 메서드 호출
 
 ```java
-@PreAuthorize(
-  "#id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()"
-)
-```
-
-* `T(패키지.클래스)` 형태로 정적 메서드 호출
-* SecurityContext 접근 로직을 표현식 밖으로 분리하는 핵심 패턴
-
----
-
-### 10-4. Bean 객체 메서드 호출 ( 예시 )
-
-```java
-@PreAuthorize("hasRole('ADMIN') or @postService.isOwner(#id)")
+@PreAuthorize("hasRole('ADMIN') or @userService.isSelf(#id)")
 public Post update(long id, String title, String content)
 ```
 
@@ -583,70 +573,13 @@ public Post update(long id, String title, String content)
 
 ---
 
-### 10-5. 논리 연산
+### 10-4. 논리 연산
 
 ```java
-@PreAuthorize("hasRole('ADMIN') or #id == ...")
+@PreAuthorize("hasRole('ADMIN') or ...")
 ```
 
 * `and`, `or`, `not` 사용 가능
-
----
-
-## 11. @PreAuthorize 실패 시 흐름
-
-조건이 `false`일 경우:
-
-* 메서드 본문 실행 ❌
-* 즉시 보안 예외 발생
-
-  * `AccessDeniedException`
-  * 또는 `AuthorizationDeniedException`
-
-즉,
-
-> `@PreAuthorize` 실패는
-> **비즈니스 예외가 아니라 보안 예외**다.
-
----
-
-## 12. @PreAuthorize 사용 규칙
-
-### 12-1. Controller에 두지 않는다
-
-* Controller는 요청/응답 변환 책임
-* 인가 규칙은 Service에서 고정한다
-
----
-
-### 12-2. “누가 실행 가능한가”만 표현한다
-
-`@PreAuthorize`는 다음만 책임진다.
-
-* 관리자 여부
-* 본인 여부
-
-비즈니스 조건은 Service 로직에서 처리한다.
-
----
-
-### 12-3. 표현식은 단순하게 유지한다
-
-좋은 예:
-
-```java
-@PreAuthorize("hasRole('ADMIN') or #id == T(com.koreanit.spring.security.SecurityUtils).currentUserId()")
-```
-
-복잡한 로직은 Java 코드로 분리한다.
-
----
-
-### 12-4. 공통 로직은 유틸 클래스로 분리한다
-
-* `SecurityUtils.currentUserId()`
-
-SpEL은 **조립만 담당**한다.
 
 ---
 
@@ -658,7 +591,7 @@ Spring Security 메서드 보안 장치**다.
 
 ---
 
-## 13. AuthorizationDeniedException 예외 처리 ( 추가 )
+## 11. AuthorizationDeniedException 예외 처리 ( 추가 )
 
 ```java
 @ExceptionHandler({ AuthorizationDeniedException.class, AccessDeniedException.class })
@@ -677,7 +610,7 @@ public ResponseEntity<ApiResponse<Void>> handleForbidden(Exception e) {
 
 ---
 
-## 14. 테스트
+## 테스트
 
 파일: `403.http`
 
@@ -731,7 +664,7 @@ Content-Type: {{json}}
 * 신규 가입 시 `ROLE_USER` 부여(권장)
 * SessionAuthenticationFilter가 `user_roles` 기반으로 authorities 주입
 * Method Security 활성화(`@EnableMethodSecurity`)
-* Service 변경 메서드는 `@PreAuthorize`로 "본인 또는 관리자" 고정
+* Service 변경 메서드는 `@PreAuthorize`로 "관리자 또는 본인" 고정
 * 권한 부족 시 GlobalExceptionHandler 에서 403(ApiResponse) 응답 확인
 
 ---

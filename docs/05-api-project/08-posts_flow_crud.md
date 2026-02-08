@@ -235,20 +235,20 @@ public class JdbcPostRepository implements PostRepository {
 
   @Override
   public boolean isOwner(long postId, long userId) {
-    String sql = """
-            SELECT 1
-            FROM posts
-            WHERE id = ? AND user_id = ?
-            LIMIT 1
-        """;
+      String sql = """
+          SELECT COUNT(*)
+          FROM posts
+          WHERE id = ? AND user_id = ?
+      """;
 
-    Integer found = jdbcTemplate.query(
-        sql,
-        rs -> rs.next() ? 1 : null,
-        postId,
-        userId);
+      int count = jdbcTemplate.queryForObject(
+          sql,
+          Integer.class,
+          postId,
+          userId
+      );
 
-    return found != null;
+      return count > 0;
   }
 
   @Override

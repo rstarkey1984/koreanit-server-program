@@ -166,40 +166,8 @@ public void delete(long id) {
 
 ---
 
-### 1) PostRepository (추가)
-
-```java
-boolean isOwner(long postId, long userId);
-```
-
----
-
-### 3) JdbcPostRepository (추가)
-
-```java
-@Override
-public boolean isOwner(long postId, long userId) {
-    String sql = """
-        SELECT 1
-        FROM posts
-        WHERE id = ? AND user_id = ?
-        LIMIT 1
-    """;
-
-    Integer found = jdbcTemplate.query(
-        sql,
-        rs -> rs.next() ? 1 : null,
-        postId,
-        userId
-    );
-
-    return found != null;
-}
-```
-
----
-
-### 4) 전제: Method Security 활성화(이미 적용)
+### 1) 전제: Method Security 활성화
+> security.config.MethodSecurityConfig 에 이미 적용되어있음
 
 ```java
 @EnableMethodSecurity
@@ -207,7 +175,7 @@ public boolean isOwner(long postId, long userId) {
 
 ---
 
-### 5) PostService 수정 및 @PreAuthorize 추가
+### 2) PostService 수정 및 @PreAuthorize 추가
 
 ```java
 /**

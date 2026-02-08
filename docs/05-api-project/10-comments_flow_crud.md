@@ -46,11 +46,11 @@ com.koreanit.spring.comment
 
 ## 3. 엔드포인트 구성
 
-| Method | Path                         | 설명       |
-| ------ | ---------------------------- | -------- |
-| POST   | /api/posts/{postId}/comments | 댓글 생성    |
+| Method | Path                         | 설명           |
+| ------ | ---------------------------- | -------------- |
+| POST   | /api/posts/{postId}/comments | 댓글 생성      |
 | GET    | /api/posts/{postId}/comments | 댓글 목록 조회 |
-| DELETE | /api/comments/{id}           | 댓글 삭제    |
+| DELETE | /api/comments/{id}           | 댓글 삭제      |
 
 정책:
 
@@ -79,12 +79,12 @@ com.koreanit.spring.comment
 
 ## 5. 실패 의미와 처리 위치 (최종 기준)
 
-| 상황                       | HTTP | 의미                 | 처리 위치                             |
-| ------------------------ | ---- | ------------------ | --------------------------------- |
+| 상황                              | HTTP | 의미               | 처리 위치                         |
+| --------------------------------- | ---- | ------------------ | --------------------------------- |
 | content(dto) 비어있음 / limit ≤ 0 | 400  | INVALID_REQUEST    | DTO / Service                     |
-| 로그인 안 됨                  | 401  | UNAUTHORIZED       | Security                          |
-| 댓글 없음                    | 404  | NOT_FOUND_RESOURCE | Service                           |
-| 본인 댓글 아님(일반 사용자)         | 403  | FORBIDDEN          | Method Security (`@PreAuthorize`) |
+| 로그인 안 됨                      | 401  | UNAUTHORIZED       | Security                          |
+| 댓글 없음                         | 404  | NOT_FOUND_RESOURCE | Service                           |
+| 본인 댓글 아님(일반 사용자)       | 403  | FORBIDDEN          | Method Security (`@PreAuthorize`) |
 
 * **401**: Security Filter 단계에서 차단
 * **403**: 메서드 진입 전(Method Security) 차단
@@ -429,20 +429,20 @@ public class JdbcCommentRepository implements CommentRepository {
 
   @Override
   public boolean isOwner(long commentId, long userId) {
-    String sql = """
-            SELECT 1
-            FROM comments
-            WHERE id = ? AND user_id = ?
-            LIMIT 1
-        """;
+      String sql = """
+          SELECT COUNT(*)
+          FROM comments
+          WHERE id = ? AND user_id = ?
+      """;
 
-    Integer found = jdbcTemplate.query(
-        sql,
-        rs -> rs.next() ? 1 : null,
-        commentId,
-        userId);
+      int count = jdbcTemplate.queryForObject(
+          sql,
+          Integer.class,
+          commentId,
+          userId
+      );
 
-    return found != null;
+      return count > 0;
   }
 }
 ```
@@ -500,7 +500,7 @@ public class CommentService {
         commentRepository.findAllByPostId(postId, before, normalizeLimit(limit)));
   }
 
-  public boolean canDelete(long id) {
+  public boolean isOwner(long id) {
     Long userId = SecurityUtils.currentUserId();
     if (userId == null) {
       return false;
@@ -508,7 +508,7 @@ public class CommentService {
     return commentRepository.isOwner(id, userId);
   }
 
-  @PreAuthorize("hasRole('ADMIN') or @commentService.canDelete(#id)")
+  @PreAuthorize("hasRole('ADMIN') or @commentService.isOwner(#id)")
   @Transactional
   public void delete(long id) {
 
