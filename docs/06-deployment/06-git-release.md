@@ -203,3 +203,18 @@ cd <REPO_NAME>
 ```bash
 ./gradlew bootRun
 ```
+
+---
+
+# 포트폴리오 작성
+
+`README.md`
+```
+1. 프로젝트 개요
+2. 기술 스택 (Spring Boot, MySQL, Redis 등)
+3. 실행 방법
+   - 환경 변수
+   - ./gradlew bootRun
+4. 주요 기능
+5. 프로젝트 구조 설명
+```
