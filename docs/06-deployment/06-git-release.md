@@ -18,7 +18,7 @@ git init
 해당 프로젝트에서 사용할 **커밋 작성자 정보(Local)** 를 설정한다.
 
 ```bash
-git config user.name "koreanit-server"
+git config user.name "testuser"
 git config user.email "deploy@koreanit.io"
 ```
 
@@ -44,7 +44,7 @@ git config user.email
 * Local: **반드시 설정**
 
 ```bash
-git config user.name "koreanit-api"
+git config user.name "testuser"
 git config user.email "deploy@koreanit.io"
 ```
 
