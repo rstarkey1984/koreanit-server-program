@@ -67,6 +67,8 @@ spring/
 │  ├─ CommentRepository.java
 │  ├─ JdbcCommentRepository.java
 │  ├─ CommentEntity / Comment / dto/
+sql/
+└─ schema.sql        # DB 스키마 정의
 ```
 
 ---
@@ -97,14 +99,80 @@ spring/
 
 ---
 
-## 5. 실행 방법 (로컬)
+## 5. 인증/보안 구조
 
-### 1) 환경 변수 설정
+* Spring Security Filter Chain 사용
+* 세션 기반 인증
+* 로그인 성공 시 Session에 사용자 정보 저장
+* 인증 필요 API는 SecurityContext 기반으로 접근 제어
 
-아래 값은 **환경 변수**로 주입한다.
+---
+
+## 6. 운영/배포 관점
+
+본 프로젝트는 다음과 같은 운영 구조를 전제로 설계되었다.
+
+* 실행 산출물: 단일 JAR
+* 실행 방식: `java -jar` 또는 systemd 서비스
+* 설정 관리: 코드 외부 환경 변수
+* (선택) Nginx 리버스 프록시를 통한 외부 접근 제어
+
+---
+
+## 7. 실행 방법 (로컬)
+
+### 7-1. MySQL 준비
+
+MySQL이 설치되어 있지 않은 경우, 먼저 설치 후 실행한다.
+
+```bash
+sudo apt update
+sudo apt install mysql-server
+sudo systemctl start mysql
+```
+
+데이터베이스 생성:
+
+```sql
+CREATE DATABASE koreanit_service
+  DEFAULT CHARACTER SET utf8mb4
+  COLLATE utf8mb4_general_ci;
+```
+
+---
+
+### 7-2. DB 스키마 생성
+
+프로젝트에는 DB 스키마가 `sql/schema.sql` 파일로 포함되어 있다.
+아래 명령으로 테이블을 생성한다.
+
+```bash
+mysql -u USER -p koreanit_service < sql/schema.sql
+```
+
+> `schema.sql`에는 users / posts / comments 테이블과 FK 제약조건이 포함되어 있다.     
+> 상단의 DROP TABLE 구문은 **개발/실습 환경 전용**이다.   
+
+---
+
+### 7-3. 애플리케이션 실행
+
+```bash
+./gradlew bootRun
+```
+
+---
+
+
+### 7-4. 환경 변수 설정
+
+운영환경에서 아래 값은 **환경 변수**로 주입한다.
 
 ```text
-DB_URL=jdbc:mysql://localhost:3306/DB_NAME
+SPRING_PROFILES_ACTIVE=prod
+PORT=8000
+
+DB_URL=jdbc:mysql://localhost:3306/koreanit_service
 DB_USER=USER
 DB_PASSWORD=PASSWORD
 
@@ -117,38 +185,38 @@ REDIS_PORT=6379
 
 ---
 
-### 2) 애플리케이션 실행
+### 7-5. systemd 서비스 등록
 
-```bash
-./gradlew bootRun
+`/etc/systemd/system/koreanit-api.service`
+```
+[Unit]
+Description=Koreanit API Server
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/koreanit-api
+ExecStart=/usr/bin/java -jar /opt/koreanit-api/app.jar
+Restart=always
+RestartSec=5
+EnvironmentFile=/opt/koreanit-api/config/.env
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-또는 빌드 후:
-
+서비스 리로드 및 실행
 ```bash
-./gradlew clean build
-java -jar build/libs/*.jar
+sudo systemctl daemon-reload
+sudo systemctl enable koreanit-api
+sudo systemctl restart koreanit-api
 ```
 
----
-
-## 6. 인증/보안 구조
-
-* Spring Security Filter Chain 사용
-* 세션 기반 인증
-* 로그인 성공 시 Session에 사용자 정보 저장
-* 인증 필요 API는 SecurityContext 기반으로 접근 제어
-
----
-
-## 7. 운영/배포 관점 설명
-
-본 프로젝트는 다음과 같은 운영 구조를 전제로 설계되었다.
-
-* 실행 산출물: 단일 JAR
-* 실행 방식: `java -jar` 또는 systemd 서비스
-* 설정 관리: 코드 외부 환경 변수
-* (선택) Nginx 리버스 프록시를 통한 외부 접근 제어
+상태 확인
+```bash
+sudo systemctl status koreanit-api
+```
 
 ---
 
@@ -156,6 +224,4 @@ java -jar build/libs/*.jar
 
 * GitHub 저장소로 형상 관리
 * 완성 시점에 태그 기반 릴리즈 생성
-
-  * 예: `v1.0.0`
 * Release에는 실행 가능한 JAR 첨부 가능

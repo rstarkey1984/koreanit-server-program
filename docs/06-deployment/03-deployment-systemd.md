@@ -154,12 +154,12 @@ WantedBy=multi-user.target
 
 ## 5. 운영 환경변수 파일
 
-### 파일 위치
+### 파일 내용 확인
 ```text
-/opt/koreanit-api/config/.env
+cat /opt/koreanit-api/config/.env
 ```
 
-### 예시
+### 출력 예시
 ```bash
 SPRING_PROFILES_ACTIVE=prod
 PORT=8000
@@ -171,8 +171,6 @@ DB_PASSWORD=password
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 ```
-
-> 이 파일은 **Git에 올리지 않는다.**
 
 ---
 
