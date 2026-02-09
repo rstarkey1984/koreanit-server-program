@@ -68,6 +68,19 @@ SELECT
 FROM numbers
 WHERE n <= 100000;
 
+-- posts 테이블 comments_cnt 동기화
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE posts p
+LEFT JOIN (
+  SELECT post_id, COUNT(*) AS cnt
+  FROM comments
+  GROUP BY post_id
+) c ON c.post_id = p.id
+SET p.comments_cnt = COALESCE(c.cnt, 0);
+
+SET SQL_SAFE_UPDATES = 1;
+
 -- (선택) 확인
 SELECT (SELECT COUNT(*) FROM users) AS users_cnt,
        (SELECT COUNT(*) FROM posts) AS posts_cnt,
