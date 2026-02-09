@@ -147,4 +147,4 @@ http://www.localhost/api/posts
 
 ## 다음 단계
 
-**개발 업데이트 후 운영 서버 적용**
+[**개발 업데이트 후 운영 서버 적용**](05-update-and-deploy.md)

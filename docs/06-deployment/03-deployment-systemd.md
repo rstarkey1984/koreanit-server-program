@@ -231,4 +231,4 @@ sudo systemctl status koreanit-api
 
 ## 다음 단계
 
-**리버스 프록시 (Nginx)**
+[**리버스 프록시 (Nginx)**](04-reverse-proxy-nginx.md)

@@ -180,4 +180,4 @@ sudo systemctl restart koreanit-api
 
 ## 다음 단계
 
-**Git 초기 설정 & 저장소 생성 절차**
+[**Git 초기 설정 & 저장소 생성 절차**](06-git-release.md)
