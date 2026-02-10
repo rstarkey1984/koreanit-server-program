@@ -309,7 +309,7 @@ limit: number
   "content": string,
   "viewCount": number,
   "commentsCnt": number,
-  "createdAt": string?
+  "createdAt": string
 }
 ```
 
@@ -323,7 +323,7 @@ limit: number
   "postId": number,
   "userId": number,
   "content": string,
-  "createdAt": string?
+  "createdAt": string
 }
 ```
 
