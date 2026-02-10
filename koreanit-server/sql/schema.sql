@@ -35,7 +35,7 @@ CREATE TABLE `posts` (
   PRIMARY KEY (`id`),
   KEY `idx_posts_user_id` (`user_id`),
   KEY `idx_posts_created_at` (`created_at`),
-  CONSTRAINT `fk_users_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_users_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 );
 
 -- =========================
@@ -51,6 +51,6 @@ CREATE TABLE `comments` (
   PRIMARY KEY (`id`),
   KEY `idx_comments_post_id` (`post_id`),
   KEY `idx_comments_user_id` (`user_id`),
-  CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_post_id` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 );

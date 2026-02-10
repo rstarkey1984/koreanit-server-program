@@ -51,8 +51,10 @@ src/
 ```js
 const newsRepository = require("../repositories/news.repository");
 
-async function fetchAndSave() {
-  // 업무 흐름 구현
+async function fetchAndSave(items) {
+  for (const item of items) {
+    await newsRepository.save(item);
+  }
 }
 
 module.exports = {
@@ -100,74 +102,10 @@ service에서는 다음을 하지 않는다.
 
 ---
 
-## 5. 예시 구현 (구조만)
-
-아직 실제 뉴스 수집 로직은 구현하지 않는다.  
-구조만 고정한다.
-
-```js
-// src/services/news.service.js
-const newsRepository = require("../repositories/news.repository");
-
-async function fetchAndSave() {
-  // TODO: 외부 뉴스 수집 (다음 단계)
-  const items = [];
-
-  for (const item of items) {
-    await newsRepository.save(item);
-  }
-}
-
-module.exports = {
-  fetchAndSave,
-};
-```
-
-포인트:
-
-* service는 반복/조건/흐름만 가진다
-* DB 저장은 repository에 위임
-
----
-
-## 6. 예외 처리 원칙
-
-service에서 에러가 발생하면:
-
-* catch하지 않는다
-* 그대로 throw한다
-
-```js
-async function fetchAndSave() {
-  if (!Array.isArray(items)) {
-    throw new Error("Invalid news items");
-  }
-
-  await newsRepository.saveAll(items);
-}
-```
-
-이 예외는:
-
-* job으로 전달
-* job → 엔트리포인트
-* 워커 실패(exit code 1)로 연결된다
-
----
-
-## 7. 이 문서에서 다루지 않는 것
-
-* 실제 RSS 수집 로직
-* 데이터 변환 상세
-* SQL 구현
-
-이 내용은 다음 문서에서 단계적으로 추가한다.
-
----
 
 ## 다음 단계
 
 다음 문서에서는  
 service가 호출하는 **repository 계층**을 구현한다.
 
-→ [뉴스 리포지토리 구현](06-news_repository.md)
+→ [**뉴스 리포지토리 구현**](06-news_repository.md)

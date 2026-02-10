@@ -83,8 +83,8 @@ npm install mysql2 dotenv
     "start": "node src/worker.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.0",
-    "mysql2": "^3.9.0"
+    "dotenv": "^17.2.4",
+    "mysql2": "^3.16.3"
   }
 }
 ```
@@ -138,13 +138,6 @@ touch src/worker.js
 
 > 실제 작업 로직은 `jobs`, `services` 폴더로 분리한다.
 
----
-
-## 체크 포인트
-
-* 워커가 `~/projects/koreanit-server/worker` 경로에 생성되었는가?
-* Spring Boot 프로젝트와 경로가 명확히 분리되어 있는가?
-* 서버 프레임워크를 사용하지 않았는가?
 
 ---
 

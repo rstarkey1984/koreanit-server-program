@@ -3,8 +3,7 @@
 이 문서에서는  
 Node.js 워커의 엔트리포인트(진입점)인 `src/worker.js`를 구현한다.
 
-엔트리포인트는 **작업을 직접 수행하는 곳이 아니다.**  
-이 파일의 책임은 다음 3가지만 가진다.
+엔트리포인트는 프로그램이 실행될 때 가장 먼저 시작되는 지점이다. Node.js 워커에서는 이 파일을 기준으로 설정 로드, 의존성 초기화, 작업 실행 흐름이 결정된다.
 
 1. 환경 변수 로드
 2. 전체 작업 흐름 제어
@@ -65,6 +64,7 @@ worker/
 require("dotenv").config();
 
 async function main() {
+  console.log("[ 메인시작 ] : " + new Date());
   // 1) 준비 단계 (예: DB 연결 확인, 락 획득 등)
   // 2) job 실행
   // 3) 정리 단계 (예: DB 종료, 락 해제 등)
@@ -72,7 +72,7 @@ async function main() {
 
 main()
   .then(() => {
-    process.exit(0);
+    process.exit(1);
   })
   .catch((err) => {
     console.error(err);
@@ -83,6 +83,8 @@ main()
 이 시점에서는 실제 작업을 실행하지 않는다.  
 우선 "성공이면 0, 실패면 1"로 끝나는 형태를 고정한다.
 
+> 종료 코드(exit code)는 이 프로세스를 실행한 “외부 주체”가 사용한다.
+
 ---
 
 ## 3. 종료 코드 표준화 (0/1)
@@ -91,7 +93,6 @@ main()
 
 * cron
 * 운영 스크립트
-* CI/CD
 
 이 환경들은 로그 메시지가 아니라 **종료 코드**로 성공/실패를 판단한다.
 
@@ -115,18 +116,11 @@ main()
 
 ---
 
-### 4-1. DB 풀 모듈 불러오기
+### 4-1. DB 커넥션 풀 모듈 
 
-다음 파일이 존재한다고 가정한다.
-
-```text
-src/db/pool.js
-```
-
-예: (이미 프로젝트에서 작성할 예정)
+`src/db/pool.js`
 
 ```js
-// src/db/pool.js
 const mysql = require("mysql2/promise");
 
 const pool = mysql.createPool({
@@ -137,8 +131,7 @@ const pool = mysql.createPool({
   port: Number(process.env.DB_PORT || 3306),
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  timezone: "+09:00",
+  queueLimit: 0
 });
 
 module.exports = pool;
@@ -151,14 +144,16 @@ module.exports = pool;
 `src/worker.js`를 아래처럼 수정한다.
 
 ```js
-// src/worker.js
 require("dotenv").config();
 
 const pool = require("./db/pool");
 
 async function main() {
+  console.log("[ 메인시작 ] : " + new Date());
+
   // 준비 단계: 연결 확인 (가벼운 ping)
-  await pool.query("SELECT 1");
+  const [rows, fields] = await pool.query("SELECT 1");
+  console.log(rows);
 
   // TODO: job 실행 (다음 문서에서 구현)
   // await fetchNewsJob.execute();
@@ -169,6 +164,7 @@ async function main() {
 
 main()
   .then(() => {
+    console.log("[ 정상종료 ] : " + new Date());
     process.exit(0);
   })
   .catch(async (err) => {
@@ -183,13 +179,11 @@ main()
     console.error(err);
     process.exit(1);
   });
+
+process.on("exit", (code) => {
+  console.log("exit code =", code);
+});
 ```
-
-포인트:
-
-* 성공 시에도 `pool.end()` 호출
-* 실패 시에도 `pool.end()`를 시도
-* 정리 실패가 본 실패를 덮어쓰지 않게 한다
 
 ---
 
@@ -202,9 +196,9 @@ main()
 ```env
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_USER=node_user
-DB_PASSWORD=node_pass123
-DB_NAME=node_db
+DB_USER=koreanit_app
+DB_PASSWORD=password
+DB_NAME=koreanit_service
 ```
 
 ---
@@ -226,6 +220,26 @@ node src/worker.js
 * `SELECT 1`이 성공
 * 커넥션 풀이 종료
 * 프로세스가 종료 코드 0으로 끝난다
+
+---
+
+## 6. .gitignore 설정
+
+`.env` 파일은 Git에 포함되면 안 된다.
+
+`.gitignore`에 다음 항목을 추가한다.
+
+```gitignore
+.env
+.env.*
+```
+
+이미 Git에 추가된 경우:
+
+```bash
+git rm --cached .env
+git commit -m "chore: remove .env from git"
+```
 
 ---
 

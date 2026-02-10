@@ -49,8 +49,12 @@ src/
 `src/jobs/fetch_news.job.js`
 
 ```js
+//const newsService = require("../services/news.service");
+
 async function execute() {
   // 실제 작업 수행
+  console.log('fetch_news.job 실행');
+  //await newsService.fetchAndSave();
 }
 
 module.exports = {
@@ -66,73 +70,20 @@ module.exports = {
 
 ---
 
-## 4. 예시: 뉴스 수집 job 구조
-
-### 4-1. 서비스 / 레포지토리 사용
-
-job은 직접 DB를 다루지 않는다.  
-service → repository 흐름을 그대로 사용한다.
-
-```js
-// src/jobs/fetch_news.job.js
-const newsService = require("../services/news.service");
-
-async function execute() {
-  await newsService.fetchAndSave();
-}
-
-module.exports = {
-  execute,
-};
-```
-
-job의 역할은 여기까지다.
-
----
-
-## 5. 엔트리포인트에 job 연결
+## 4. 엔트리포인트에 job 연결
 
 이제 `worker.js`에서 job을 실행한다.
-
 ```js
-// src/worker.js
-require("dotenv").config();
-
-const pool = require("./db/pool");
 const fetchNewsJob = require("./jobs/fetch_news.job");
-
-async function main() {
-  await pool.query("SELECT 1");
-
-  await fetchNewsJob.execute();
-
-  await pool.end();
-}
-
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch(async (err) => {
-    try {
-      await pool.end();
-    } catch (e) {
-      console.error("pool.end() failed:", e);
-    }
-
-    console.error(err);
-    process.exit(1);
-  });
 ```
 
-포인트:
-
-* job 실패 → 예외 throw → 워커 실패
-* 엔트리포인트는 **job 결과를 판단하지 않는다**
+```js
+await fetchNewsJob.execute();
+```
 
 ---
 
-## 6. job 실패 시 동작 흐름
+## 5. job 실패 시 동작 흐름
 
 ```text
 job.execute()
@@ -150,20 +101,10 @@ catch 진입
 
 ---
 
-## 7. 이 문서에서 다루지 않는 것
-
-* RSS 파싱 구현
-* 외부 API 상세
-* 데이터 정합성 검증
-
-이 부분은 다음 문서에서 단계적으로 추가한다.
-
----
-
 ## 다음 단계
 
 다음 문서에서는  
 뉴스 수집 job 내부에서 사용할  
 **service / repository 구조**를 구현한다.
 
-→ [뉴스 서비스 구현](05-news_service.md)
+→ [**뉴스 서비스 구현**](05-news_service.md)

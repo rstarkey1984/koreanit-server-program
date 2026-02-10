@@ -194,6 +194,7 @@ sudo systemctl status koreanit-api
 ```bash
 journalctl -u koreanit-api -f
 ```
+> systemd로 등록된 koreanit-api 서비스의 실시간 로그를 확인한다.
 
 ---
 

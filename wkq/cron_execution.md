@@ -171,4 +171,4 @@ cron은 시간이 되면 무조건 실행한다.
 cron으로 실행되는 워커가 실제로 수행할  
 **RSS 수집 → 변환 → 저장** 흐름을 구현한다.
 
-→ [RSS 수집 및 변환 구현](10-rss_fetch_and_parse.md)
+→ [**RSS 수집 및 변환 구현**](10-rss_fetch_and_parse.md)
