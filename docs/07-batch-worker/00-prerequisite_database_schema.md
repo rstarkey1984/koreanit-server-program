@@ -105,4 +105,4 @@ KEY idx_news_published_at (published_at)
 이 스키마가 **이미 존재한다는 전제** 하에  
 Node.js 워커 구현을 진행한다.
 
-→ [워커 프로젝트 초기화](01-worker_project_setup.md)
+→ [**워커 프로젝트 초기화**](01-worker_project_setup.md)
