@@ -61,7 +61,7 @@ spring/
 │  ├─ PostService.java         # 게시글 비즈니스 로직
 │  ├─ PostRepository.java      # 게시글 저장소 인터페이스
 │  ├─ JdbcPostRepository.java  # JDBC 기반 구현체
-│  └─ PostEntity / Post / dto/ # Entity·Domain·DTO
+│  └─ PostEntity | Post | dto/ # Entity·Domain·DTO
 ├─ comment/                    # 댓글 도메인
 │  ├─ CommentController.java   # 댓글 API
 │  ├─ CommentService.java      # 댓글 비즈니스 로직
