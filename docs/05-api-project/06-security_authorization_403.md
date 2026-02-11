@@ -98,7 +98,7 @@ INSERT INTO user_roles (user_id, role) VALUES (1, 'ROLE_USER');
 ### 5-1. Repository 인터페이스 ( 작성 )
 
 ```java
-package com.koreanit.spring.repository;
+package com.koreanit.spring.security;
 
 import java.util.List;
 
@@ -113,7 +113,7 @@ public interface UserRoleRepository {
 ### 5-2. JdbcTemplate 구현체 ( 작성 )
 
 ```java
-package com.koreanit.spring.repository.impl;
+package com.koreanit.spring.security;
 
 import com.koreanit.spring.repository.UserRoleRepository;
 import java.util.List;
